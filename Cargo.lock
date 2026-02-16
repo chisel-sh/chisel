@@ -211,8 +211,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "chisel"
+version = "0.1.1"
+dependencies = [
+ "anyhow",
+ "chisel-docs",
+ "chisel-fs",
+ "chisel-issues",
+ "chisel-render",
+ "chisel-store",
+ "chrono",
+ "clap",
+ "crossterm",
+ "dialoguer",
+ "ratatui",
+ "serde",
+ "serde_yaml",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "chisel-docs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -229,7 +251,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-fs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "slug",
@@ -238,7 +260,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-issues"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -257,7 +279,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-render"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "ratatui",
@@ -267,7 +289,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-store"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -330,28 +352,6 @@ name = "clap_lex"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a822ea5bc7590f9d40f1ba12c0dc3c2760f3482c6984db1573ad11031420831"
-
-[[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chisel-docs",
- "chisel-fs",
- "chisel-issues",
- "chisel-render",
- "chisel-store",
- "chrono",
- "clap",
- "crossterm",
- "dialoguer",
- "ratatui",
- "serde",
- "serde_yaml",
- "tempfile",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "colorchoice"
