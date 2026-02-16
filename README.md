@@ -52,5 +52,3 @@ Contributions are welcome! See our [Contributing Guide](./CONTRIBUTING.md) to ge
 Chisel is distributed under the [Functional Source License, Version 1.1](./LICENSE.md) (FSL-1.1-Apache-2.0).
 
 The Functional Source License allows you to use, study, and modify the software for any purpose other than providing a competing service. It automatically converts to the Apache License, Version 2.0 after two years.
-
-The libraries in `packages/` are additionally available under the Apache License, Version 2.0.
