@@ -20,6 +20,8 @@ description = "Text-first tools for shaping information — crafted for develope
 cargo-dist-version = "0.30.3"
 # CI backends to support
 ci = "github"
+# Allow custom changes to CI workflows
+allow-dirty = ["ci"]
 # The installers to generate for each app
 installers = ["shell", "powershell"]
 # Target platforms to build apps for (Rust target-triple syntax)
