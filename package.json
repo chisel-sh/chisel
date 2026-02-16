@@ -1,0 +1,26 @@
+{
+  "name": "@chisel-sh/monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Text-first tools for shaping information — crafted for developers, structured for AI.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "check": "turbo check",
+    "test": "turbo test",
+    "format": "turbo format"
+  },
+  "keywords": [],
+  "author": "Chisel Team",
+  "license": "FSL-1.1-Apache-2.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "^2.8.8"
+  },
+  "packageManager": "npm@10.8.2"
+}

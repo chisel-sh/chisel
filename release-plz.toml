@@ -1,0 +1,15 @@
+# release-plz.toml
+# Configures automated release PRs and changelogs
+
+[workspace]
+# Settings here apply to all packages in the workspace
+semver_check = true
+# release-plz uses Conventional Commits by default.
+
+[changelog]
+# Customize how the changelog looks
+header = """
+# Changelog
+All notable changes to this project will be documented in this file.
+"""
+trim = true
