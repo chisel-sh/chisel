@@ -569,9 +569,9 @@ impl DocsApp {
     }
 
     fn render(&mut self, f: &mut Frame) {
-        f.render_widget(Clear, f.size());
+        f.render_widget(Clear, f.area());
         
-        let chunks = Layout::default().direction(Direction::Vertical).constraints([Constraint::Min(0), Constraint::Length(1)]).split(f.size());
+        let chunks = Layout::default().direction(Direction::Vertical).constraints([Constraint::Min(0), Constraint::Length(1)]).split(f.area());
         let main_chunks = Layout::default().direction(Direction::Horizontal).constraints([Constraint::Percentage(20), Constraint::Percentage(30), Constraint::Percentage(50)]).split(chunks[0]);
 
         // Sidebar
@@ -631,7 +631,7 @@ impl DocsApp {
             AppPrompt::Select { label, options, selected, .. } => {
                 render_footer(f, chunks[1], vec![Span::styled(" ESC", Style::default().fg(ACCENT_RED).add_modifier(Modifier::BOLD)), Span::raw(":cancel ")]);
                 
-                let area = centered_rect(40, 40, f.size());
+                let area = centered_rect(40, 40, f.area());
                 f.render_widget(Clear, area);
                 let items: Vec<ListItem> = options.iter().enumerate().map(|(i, opt)| {
                     if i == *selected {
@@ -1037,9 +1037,9 @@ impl IssuesApp {
     }
 
     fn render(&mut self, f: &mut Frame) {
-        f.render_widget(Clear, f.size());
+        f.render_widget(Clear, f.area());
 
-        let chunks = Layout::default().direction(Direction::Vertical).constraints([Constraint::Min(0), Constraint::Length(1)]).split(f.size());
+        let chunks = Layout::default().direction(Direction::Vertical).constraints([Constraint::Min(0), Constraint::Length(1)]).split(f.area());
         let board_chunks = Layout::default().direction(Direction::Horizontal).constraints([Constraint::Percentage(60), Constraint::Percentage(40)]).split(chunks[0]);
         let column_chunks = Layout::default().direction(Direction::Horizontal).constraints([Constraint::Percentage(33), Constraint::Percentage(33), Constraint::Percentage(34)]).split(board_chunks[0]);
 
@@ -1094,7 +1094,7 @@ impl IssuesApp {
             AppPrompt::Select { label, options, selected, .. } => {
                 render_footer(f, chunks[1], vec![Span::styled(" ESC", Style::default().fg(ACCENT_RED).add_modifier(Modifier::BOLD)), Span::raw(":cancel ")]);
                 
-                let area = centered_rect(40, 40, f.size());
+                let area = centered_rect(40, 40, f.area());
                 f.render_widget(Clear, area);
                 let items: Vec<ListItem> = options.iter().enumerate().map(|(i, opt)| {
                     if i == *selected {
