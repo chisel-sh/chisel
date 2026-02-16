@@ -12,8 +12,8 @@ OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
 
 case "$OS" in
-  linux*)   PLATFORM="unknown-linux-gnu"; EXT="tar.gz" ;;
-  darwin*)  PLATFORM="apple-darwin"; EXT="tar.gz" ;;
+  linux*)   PLATFORM="unknown-linux-gnu"; EXT="tar.xz" ;;
+  darwin*)  PLATFORM="apple-darwin"; EXT="tar.xz" ;;
   msys*|cygwin*|mingw*) PLATFORM="pc-windows-msvc"; EXT="zip" ;;
   *)        echo "❌ Unsupported OS: $OS"; exit 1 ;;
 esac
@@ -39,11 +39,14 @@ fi
 echo "🚀 Downloading Chisel $LATEST_TAG..."
 
 # 3. Download and Extract
-# GitHub assets for cargo-dist usually follow the format: {crate}-{target}.{ext}
+# GitHub assets for cargo-dist follow the format: {crate}-{target}.{ext}
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/chisel-$TARGET.$EXT"
 TEMP_DIR=$(mktemp -d)
 
-if [ "$EXT" = "tar.gz" ]; then
+if [ "$EXT" = "tar.xz" ]; then
+    curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_DIR/chisel.tar.xz"
+    tar -xJf "$TEMP_DIR/chisel.tar.xz" -C "$TEMP_DIR"
+elif [ "$EXT" = "tar.gz" ]; then
     curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_DIR/chisel.tar.gz"
     tar -xzf "$TEMP_DIR/chisel.tar.gz" -C "$TEMP_DIR"
 else
