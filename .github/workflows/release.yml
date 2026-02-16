@@ -5,7 +5,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'chisel-v*'
 
 permissions:
   contents: write
@@ -69,4 +69,4 @@ jobs:
         with:
           files: artifacts/**/*
           generate_release_notes: true
-          draft: true # Set to false once confident
+          draft: false

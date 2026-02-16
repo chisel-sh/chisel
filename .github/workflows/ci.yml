@@ -31,3 +31,17 @@ jobs:
           components: clippy
       - name: Run clippy
         run: cargo clippy -- -D warnings
+
+  security:
+    name: security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run security audit
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # RUSTSEC-2023-0071: rsa vulnerability in sqlx-mysql (unused)
+          # RUSTSEC-2024-0436: paste is unmaintained (transitive from ratatui)
+          # RUSTSEC-2026-0002: lru soundness issue (transitive from ratatui)
+          ignore: RUSTSEC-2023-0071, RUSTSEC-2024-0436, RUSTSEC-2026-0002
