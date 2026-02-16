@@ -1,0 +1,34 @@
+[package]
+name = "chisel"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = true
+
+[package.metadata.dist]
+dist = true
+
+[[bin]]
+name = "chisel"
+path = "src/main.rs"
+
+[dependencies]
+chisel-render = { path = "../chisel-render" }
+chisel-store = { path = "../chisel-store" }
+chisel-fs = { path = "../chisel-fs" }
+chisel-docs = { path = "../chisel-docs" }
+chisel-issues = { path = "../chisel-issues" }
+clap.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+chrono = { version = "0.4", features = ["serde"] }
+tracing.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+dialoguer = "0.11"
+
+[dev-dependencies]
+tempfile.workspace = true

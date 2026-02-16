@@ -1,0 +1,560 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { HeroTerminal } from "../components/HeroTerminal";
+import MarqueeBanner from "../components/MarqueeBanner.astro";
+import { DualModeVideo } from "../components/DualModeVideo";
+---
+
+<Layout
+    title="Chisel | Text-first tools for shaping information."
+    preloadVideos={[
+        "/assets/docs_human.webm",
+        "/assets/docs_machine.webm",
+        "/assets/issues_human.webm",
+        "/assets/issues_machine.webm",
+    ]}
+>
+    <MarqueeBanner />
+    <main class="max-w-6xl mx-auto px-4 py-20 sm:py-32">
+        <!-- Hero Section -->
+        <section class="text-center mb-24">
+            <div class="flex flex-col items-center justify-center mb-10">
+                <h1
+                    class="text-7xl sm:text-9xl font-extrabold tracking-tighter text-[#EDEDED] flex items-center justify-center drop-shadow-[0_0_30px_rgba(237,237,237,0.15)]"
+                >
+                    chisel<span
+                        class="text-[#4DA3FF] ml-1 drop-shadow-[0_0_15px_rgba(77,163,255,0.5)]"
+                        >_</span
+                    >
+                </h1>
+            </div>
+            <p
+                class="text-xl sm:text-2xl text-gray-400 max-w-3xl mx-auto mb-10 font-mono"
+            >
+                <span class="text-[#4DA3FF]"
+                    >Text-first tools for shaping information.</span
+                ><br />
+                Crafted for developers. Structured for AI.
+            </p>
+            <p class="text-lg text-gray-300 max-w-2xl mx-auto mb-12">
+                A suite of terminal-native tools that help you organize
+                knowledge, understand systems, and manage work — whether you’re
+                a human or an LLM.
+            </p>
+
+            <div class="max-w-md mx-auto mb-12">
+                <form
+                    name="hero-signup"
+                    method="POST"
+                    action="/success"
+                    data-netlify="true"
+                    class="flex flex-col sm:flex-row gap-3"
+                >
+                    <input type="hidden" name="form-name" value="hero-signup" />
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="your@email.com"
+                        required
+                        class="flex-grow px-4 py-3 bg-[#1A1A1A] border border-gray-800 rounded text-[#EDEDED] focus:outline-none focus:border-[#4DA3FF] font-mono text-sm"
+                    />
+                    <button
+                        type="submit"
+                        class="px-6 py-3 bg-[#EDEDED] text-[#0D0D0D] font-bold rounded hover:bg-[#4DA3FF] transition-colors whitespace-nowrap"
+                    >
+                        Join the Waitlist
+                    </button>
+                </form>
+                <p class="text-xs text-gray-400 mt-4 font-mono">
+                    Sign up to be notified when we open the private alpha.
+                </p>
+            </div>
+
+            <!-- Install Teaser
+            <div class="max-w-xl mx-auto mb-20">
+                <div
+                    class="bg-[#050505] border border-gray-800 rounded-lg p-1.5 pl-4 flex items-center justify-between font-mono text-sm group"
+                >
+                    <code
+                        class="text-gray-400 whitespace-nowrap overflow-x-auto py-2"
+                    >
+                        <span class="text-[#4DA3FF]">$</span> curl -sL https://install.chisel.build
+                        | sh
+                    </code>
+                    <div class="flex items-center gap-3">
+                        <button
+                            id="copy-install"
+                            class="p-2 hover:bg-gray-900 rounded-md transition-colors text-gray-500 hover:text-[#EDEDED]"
+                            title="Copy to clipboard"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                ><rect
+                                    width="14"
+                                    height="14"
+                                    x="8"
+                                    y="8"
+                                    rx="2"
+                                    ry="2"></rect><path
+                                    d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                                ></path></svg
+                            >
+                        </button>
+                        <span
+                            class="text-[10px] text-blue-400 uppercase tracking-widest font-bold pr-3 border-l border-gray-800 pl-3 hidden sm:inline"
+                            >Alpha Preview</span
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                const copyBtn = document.getElementById("copy-install");
+                copyBtn?.addEventListener("click", () => {
+                    const code = "curl -sL https://install.chisel.build | sh";
+                    navigator.clipboard.writeText(code);
+
+                    // Visual feedback
+                    const originalIcon = copyBtn.innerHTML;
+                    copyBtn.innerHTML =
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EEB83" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalIcon;
+                    }, 2000);
+                });
+            </script>
+            -->
+
+            <div class="max-w-4xl mx-auto">
+                <HeroTerminal client:load />
+            </div>
+        </section>
+
+        <!-- Availability Status -->
+        <section class="max-w-4xl mx-auto mb-32">
+            <div
+                class="bg-[#1A1A1A]/50 border border-gray-800 rounded-2xl p-8 backdrop-blur-sm"
+            >
+                <h2
+                    class="text-xl font-bold mb-6 text-[#EDEDED] flex items-center gap-2"
+                >
+                    <span
+                        class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
+                    ></span>
+                    Project Status & Roadmap
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                    <div class="space-y-2">
+                        <div
+                            class="text-xs font-mono text-blue-400 uppercase tracking-widest font-bold"
+                        >
+                            Available Now
+                        </div>
+                        <h3 class="font-bold text-[#EDEDED]">Chisel Docs</h3>
+                        <p class="text-sm text-gray-400">
+                            Knowledge base with 3-pane TUI explorer and SQLite
+                            indexing.
+                        </p>
+                    </div>
+                    <div class="space-y-2 border-l-0 sm:border-l border-gray-800 pl-0 sm:pl-8">
+                        <div
+                            class="text-xs font-mono text-blue-400 uppercase tracking-widest font-bold"
+                        >
+                            Available Now
+                        </div>
+                        <h3 class="font-bold text-[#EDEDED]">Chisel Issues</h3>
+                        <p class="text-sm text-gray-400">
+                            Local-first Kanban board with interactive status
+                            management.
+                        </p>
+                    </div>
+                    <div class="space-y-2 border-l-0 sm:border-l border-gray-800 pl-0 sm:pl-8">
+                        <div
+                            class="text-xs font-mono text-gray-500 uppercase tracking-widest font-bold"
+                        >
+                            Coming Soon
+                        </div>
+                        <h3 class="font-bold text-[#EDEDED]">Chisel Observe</h3>
+                        <p class="text-sm text-gray-400">
+                            TUI-based observability for Docker, K8s, and
+                            CloudWatch logs.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Sections -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-32">
+            <div class="space-y-6">
+                <h3 class="text-2xl font-bold text-[#EDEDED]">Chisel Docs</h3>
+                <p class="text-gray-400 leading-relaxed">
+                    A knowledge base that understands structure. Markdown-first.
+                    Local SQLite index. AI-ready schemas.
+                </p>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-blue-400 uppercase font-bold tracking-widest"
+                        >Markdown</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-blue-400 uppercase font-bold tracking-widest"
+                        >Local Index</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-blue-400 uppercase font-bold tracking-widest"
+                        >RAG Ready</span
+                    >
+                </div>
+            </div>
+            <div class="space-y-6">
+                <h3 class="text-2xl font-bold text-[#EDEDED]">Chisel Issues</h3>
+                <p class="text-gray-400 leading-relaxed">
+                    A text-first issue tracker for engineering teams. Local
+                    files, clean TUI board, agent-friendly APIs.
+                </p>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
+                        >Kanban TUI</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
+                        >Local-First</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
+                        >Extensible</span
+                    >
+                </div>
+            </div>
+            <div class="space-y-6 opacity-60">
+                <h3 class="text-2xl font-bold text-[#EDEDED]">
+                    Chisel Observe (Planned)
+                </h3>
+                <p class="text-gray-400 leading-relaxed">
+                    Observability without dashboards. Logs, metrics, and traces
+                    in a fast, expressive TUI.
+                </p>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-green-400 uppercase font-bold tracking-widest"
+                        >Docker</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-green-400 uppercase font-bold tracking-widest"
+                        >K8s</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-green-400 uppercase font-bold tracking-widest"
+                        >CloudWatch</span
+                    >
+                </div>
+            </div>
+        </section>
+
+        <!-- Why Chisel Section -->
+        <section class="mb-32">
+            <h2 class="text-3xl font-bold text-center mb-16 text-[#EDEDED]">
+                Why use Chisel?
+            </h2>
+
+            <!-- Desktop Table -->
+            <div
+                class="hidden md:block max-w-4xl mx-auto overflow-hidden rounded-2xl border border-gray-800 bg-[#050505]"
+            >
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                        <tr class="bg-[#1A1A1A]">
+                            <th
+                                class="p-4 font-bold text-[#EDEDED] border-b border-gray-800"
+                                >Feature</th
+                            >
+                            <th
+                                class="p-4 font-bold text-[#EDEDED] border-b border-gray-800"
+                                >Legacy Tools</th
+                            >
+                            <th
+                                class="p-4 font-bold text-blue-400 border-b border-gray-800"
+                                >Chisel</th
+                            >
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-400">
+                        <tr class="border-b border-gray-900 hover:bg-[#0D0D0D]">
+                            <td class="p-4 border-r border-gray-900 font-medium"
+                                >Interface</td
+                            >
+                            <td class="p-4 border-r border-gray-900"
+                                >Heavy Web Apps / Clicks</td
+                            >
+                            <td class="p-4 font-bold text-[#EDEDED]"
+                                >Terminal / 10ms Latency</td
+                            >
+                        </tr>
+                        <tr class="border-b border-gray-900 hover:bg-[#0D0D0D]">
+                            <td class="p-4 border-r border-gray-900 font-medium"
+                                >Data Storage</td
+                            >
+                            <td class="p-4 border-r border-gray-900"
+                                >Cloud-Only / Proprietary</td
+                            >
+                            <td class="p-4 font-bold text-[#EDEDED]"
+                                >Local-First Markdown/YAML</td
+                            >
+                        </tr>
+                        <tr class="border-b border-gray-900 hover:bg-[#0D0D0D]">
+                            <td class="p-4 border-r border-gray-900 font-medium"
+                                >LLM Access</td
+                            >
+                            <td class="p-4 border-r border-gray-900"
+                                >Screen Scraping / Manual Paste</td
+                            >
+                            <td class="p-4 font-bold text-[#EDEDED]"
+                                >Structured Machine Mode</td
+                            >
+                        </tr>
+                        <tr class="hover:bg-[#0D0D0D]">
+                            <td class="p-4 border-r border-gray-900 font-medium"
+                                >Licensing</td
+                            >
+                            <td class="p-4 border-r border-gray-900"
+                                >SaaS / Subscription</td
+                            >
+                            <td class="p-4 font-bold text-[#EDEDED]"
+                                >Open-Core / MIT</td
+                            >
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="grid grid-cols-1 gap-6 md:hidden">
+                {
+                    [
+                        {
+                            feature: "Interface",
+                            legacy: "Heavy Web Apps / Clicks",
+                            chisel: "Terminal / 10ms Latency",
+                        },
+                        {
+                            feature: "Data Storage",
+                            legacy: "Cloud-Only / Proprietary",
+                            chisel: "Local-First Markdown/YAML",
+                        },
+                        {
+                            feature: "LLM Access",
+                            legacy: "Screen Scraping / Manual Paste",
+                            chisel: "Structured Machine Mode",
+                        },
+                        {
+                            feature: "Licensing",
+                            legacy: "SaaS / Subscription",
+                            chisel: "Open-Core / MIT",
+                        },
+                    ].map((item) => (
+                        <div class="bg-[#050505] border border-gray-800 rounded-xl p-6 space-y-4">
+                            <div class="text-blue-400 font-mono text-xs uppercase tracking-widest font-bold">
+                                {item.feature}
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 pt-2">
+                                <div class="space-y-1">
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
+                                        Legacy
+                                    </div>
+                                    <div class="text-sm text-gray-400">
+                                        {item.legacy}
+                                    </div>
+                                </div>
+                                <div class="space-y-1 border-l border-gray-900 pl-4">
+                                    <div class="text-[10px] text-[#EDEDED] uppercase font-bold tracking-tighter">
+                                        Chisel
+                                    </div>
+                                    <div class="text-sm text-[#EDEDED] font-bold">
+                                        {item.chisel}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+        </section>
+
+        <!-- Human vs Machine Section -->
+        <section class="mb-32">
+            <h2
+                class="text-3xl sm:text-4xl font-bold text-center mb-4 text-[#EDEDED]"
+            >
+                Built for humans. Structured for AI.
+            </h2>
+            <div class="max-w-2xl mx-auto text-center mb-16 space-y-4">
+                <p class="text-gray-400 font-mono text-sm">
+                    Every Chisel tool supports a mode optimized for LLM context
+                    windows and parsing.
+                </p>
+                <div
+                    class="inline-block px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-300 font-mono"
+                >
+                    <b class="text-[#4DA3FF]">Token-Dense:</b> Prunes human metadata,
+                    optimizes for context limits, and uses LLM-friendly schemas.
+                </div>
+            </div>
+
+            <div class="space-y-20 max-w-4xl mx-auto">
+                <!-- Docs Example -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="h-px flex-grow bg-gray-900"></div>
+                        <h3
+                            class="text-sm font-mono text-gray-400 uppercase tracking-widest"
+                        >
+                            Chisel Docs
+                        </h3>
+                        <div class="h-px flex-grow bg-gray-900"></div>
+                    </div>
+
+                    <DualModeVideo
+                        client:load
+                        humanTitle="chisel docs"
+                        machineTitle="chisel docs — machine"
+                        humanVideo="/assets/docs_human.webm"
+                        machineVideo="/assets/docs_machine.webm"
+                    >
+                        <div
+                            slot="humanFooter"
+                            class="flex gap-4 text-gray-400 text-[10px] font-mono"
+                        >
+                            <span><b class="text-[#EDEDED]">e</b>:edit</span>
+                            <span><b class="text-[#EDEDED]">n</b>:new</span>
+                            <span><b class="text-[#EDEDED]">Tab</b>:switch</span
+                            >
+                            <span class="ml-auto text-gray-400 italic"
+                                >hjkl navigation</span
+                            >
+                        </div>
+                    </DualModeVideo>
+                </div>
+
+                <!-- Issues Example -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="h-px flex-grow bg-gray-900"></div>
+                        <h3
+                            class="text-sm font-mono text-gray-400 uppercase tracking-widest"
+                        >
+                            Chisel Issues
+                        </h3>
+                        <div class="h-px flex-grow bg-gray-900"></div>
+                    </div>
+
+                    <DualModeVideo
+                        client:load
+                        humanTitle="chisel issues"
+                        machineTitle="chisel issues — machine"
+                        humanVideo="/assets/issues_human.webm"
+                        machineVideo="/assets/issues_machine.webm"
+                    >
+                        <div
+                            slot="humanFooter"
+                            class="flex gap-4 text-gray-400 text-[10px] font-mono"
+                        >
+                            <span><b class="text-[#EDEDED]">m</b>:status</span>
+                            <span><b class="text-[#EDEDED]">t</b>:title</span>
+                            <span><b class="text-[#EDEDED]">p</b>:prio</span>
+                            <span class="ml-auto text-gray-400">G:bottom</span>
+                        </div>
+                    </DualModeVideo>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Foundation / The Bones -->
+        <section class="mb-32 py-20 border-y border-gray-900 relative">
+            <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 max-w-6xl mx-auto"
+            >
+                <div class="space-y-4">
+                    <div class="text-[#4DA3FF] text-xl font-bold font-mono">
+                        01. Architecture
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Written in <b class="text-[#EDEDED]">Rust</b> for near-zero
+                        overhead. TUI response times under 10ms on massive datasets.
+                        No Node.js or Python runtime required.
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-[#4DA3FF] text-xl font-bold font-mono">
+                        02. Storage
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Local-first <b class="text-[#EDEDED]">Markdown & YAML</b
+                        > files. An internal <b class="text-[#EDEDED]"
+                            >SQLite FTS5</b
+                        > index provides instant full-text search.
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-[#4DA3FF] text-xl font-bold font-mono">
+                        03. Open Core
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        The CLI and TUI are <b class="text-[#EDEDED]"
+                            >Open Source</b
+                        > (MIT). You own your data, your tools, and your workflow
+                        forever.
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-[#4DA3FF] text-xl font-bold font-mono">
+                        04. Extensible
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Built to be extended. Use the <b class="text-[#EDEDED]"
+                            >Machine Mode YAML</b
+                        > output to pipe Chisel into scripts or AI agents.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="text-center py-20 border-t border-gray-900">
+            <h2 class="text-4xl font-bold mb-8 text-[#EDEDED]">
+                Start shaping your workflow.
+            </h2>
+            <p class="text-xl text-gray-300 mb-12">
+                Chisel is in active development. Join the waitlist to help shape
+                the future of text-first tools.
+            </p>
+
+            <div class="flex flex-col items-center gap-6">
+                <a
+                    href="https://github.com/chisel-sh/chisel"
+                    class="px-8 py-4 bg-[#EDEDED] text-[#0D0D0D] font-bold rounded-lg hover:bg-[#4DA3FF] transition-all transform hover:-translate-y-1"
+                >
+                    View on GitHub
+                </a>
+                <p class="text-gray-500 font-mono text-xs">
+                    v0.1.0-alpha • FSL-1.1-Apache-2.0 Licensed
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer
+        class="py-12 border-t border-gray-900 text-center text-gray-400 text-sm"
+    >
+        <p>© 2026 Chisel Tools. Built for humans and LLMs.</p>
+    </footer>
+</Layout>

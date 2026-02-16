@@ -1,0 +1,61 @@
+---
+interface Props {
+  src: string;
+  title?: string;
+  class?: string;
+}
+
+const { src, title = "chisel — terminal", class: className } = Astro.props;
+---
+
+<div class={`w-full rounded-lg overflow-hidden border border-gray-800 shadow-2xl bg-[#0D0D0D] ${className}`}>
+  {/* Terminal Header */}
+  <div class="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] border-b border-gray-800 select-none">
+    <div class="flex gap-1.5 shrink-0">
+      <div class="w-3 h-3 rounded-full bg-[#EB5757]"></div>
+      <div class="w-3 h-3 rounded-full bg-[#F2C94C]"></div>
+      <div class="w-3 h-3 rounded-full bg-[#6EEB83]"></div>
+    </div>
+    <div class="ml-2 text-xs text-gray-500 font-mono truncate uppercase tracking-widest">{title}</div>
+  </div>
+
+  {/* Video Body */}
+  <div class="relative w-full bg-[#0D0D0D]">
+    <video
+      src={src}
+      autoplay
+      loop
+      muted
+      playsinline
+      data-terminal-video
+      class="w-full h-auto block"
+    ></video>
+  </div>
+</div>
+
+<script>
+  // Global observer for all terminal videos
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting) {
+          video.play().catch(() => {
+             // Autoplay might be blocked or fail
+          });
+        } else {
+          video.pause();
+        }
+      });
+    },
+    { threshold: 0.25 }
+  );
+
+  // Observe existing videos
+  document.querySelectorAll('video[data-terminal-video]').forEach((video) => {
+    observer.observe(video);
+  });
+
+  // Handle View Transitions (if enabled later) or dynamic updates
+  // For now, simple query is sufficient for static Astro pages
+</script>
