@@ -28,17 +28,19 @@ TARGET="${ARCH_NAME}-${PLATFORM}"
 
 # 2. Get latest release version
 echo "🔍 Finding latest release for $TARGET..."
-LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+# This gets the full tag name (e.g. chisel-v0.1.1)
+LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
-if [ -z "$LATEST_RELEASE" ]; then
+if [ -z "$LATEST_TAG" ]; then
     echo "❌ Could not find latest release. Please check https://github.com/$REPO/releases"
     exit 1
 fi
 
-echo "🚀 Downloading Chisel $LATEST_RELEASE..."
+echo "🚀 Downloading Chisel $LATEST_TAG..."
 
 # 3. Download and Extract
-DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST_RELEASE/chisel-$TARGET.tar.gz"
+# GitHub assets for cargo-dist usually follow the format: {crate}-{target}.tar.gz
+DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST_TAG/chisel-$TARGET.tar.gz"
 TEMP_DIR=$(mktemp -d)
 
 curl -L "$DOWNLOAD_URL" -o "$TEMP_DIR/chisel.tar.gz"
