@@ -42,7 +42,7 @@ anyhow = "1.0"
 tempfile = "3.10"
 thiserror = "1.0"
 tracing = "0.1"
-sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "chrono"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "chrono", "migrate", "macros"] }
 strum = "0.26"
 strum_macros = "0.26"
 
