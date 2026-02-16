@@ -1,0 +1,52 @@
+[workspace]
+resolver = "2"
+members = [
+    "packages/*",
+    "packages/chisel-issues",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Chisel Team"]
+license = "FSL-1.1-Apache-2.0"
+repository = "https://github.com/chisel-sh/chisel"
+homepage = "https://chisel.build"
+description = "Text-first tools for shaping information — crafted for developers, structured for AI."
+
+# Config for 'dist'
+[workspace.metadata.dist]
+# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.30.3"
+# CI backends to support
+ci = "github"
+# The installers to generate for each app
+installers = ["shell", "powershell"]
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# Publish jobs to run in CI
+publish-jobs = ["homebrew"]
+# Whether to install an updater program
+install-updater = true
+# Path that installers should place binaries in
+install-path = "CARGO_HOME"
+
+[workspace.dependencies]
+clap = { version = "4.5", features = ["derive"] }
+ratatui = "0.26"
+crossterm = "0.27"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+tokio = { version = "1.36", features = ["full"] }
+anyhow = "1.0"
+tempfile = "3.10"
+thiserror = "1.0"
+tracing = "0.1"
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "chrono"] }
+strum = "0.26"
+strum_macros = "0.26"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

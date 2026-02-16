@@ -1,0 +1,23 @@
+[package]
+name = "chisel-issues"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license = "Apache-2.0"
+
+[dependencies]
+chisel-render = { path = "../chisel-render" }
+chisel-store = { path = "../chisel-store" }
+chisel-fs = { path = "../chisel-fs" }
+serde = { workspace = true, features = ["derive"] }
+serde_yaml = { workspace = true }
+anyhow = { workspace = true }
+chrono = { version = "0.4", features = ["serde"] }
+tokio = { workspace = true }
+async-trait = "0.1"
+glob = "0.3"
+strum = { workspace = true }
+strum_macros = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
