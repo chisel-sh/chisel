@@ -1,0 +1,41 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Chisel | You're on the list!">
+    <main class="max-w-4xl mx-auto px-4 py-32 text-center">
+        <div class="mb-12 flex justify-center">
+            <div class="relative bg-[#050505] rounded-2xl p-6 border border-gray-800 shadow-[0_0_50px_rgba(77,163,255,0.1)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="6" fill="#0D0D0D"/>
+                    <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#333333" stroke-opacity="0.5"/>
+                    <path d="M10 12C10 10.8954 10.8954 10 12 10H18V13H12V20H18V23H12C10.8954 23 10 22.1046 10 21V12Z" fill="#EDEDED"/>
+                    <rect x="20" y="21" width="6" height="2" fill="#6EEB83" />
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tighter text-[#EDEDED] mb-6">
+            you're on the list<span class="text-[#6EEB83] ml-1">_</span>
+        </h1>
+        
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+            Thanks for joining the Chisel waitlist. We'll reach out as soon as we open up the private alpha.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <a 
+                href="/" 
+                class="px-8 py-3 bg-[#1A1A1A] text-[#EDEDED] font-bold rounded-lg border border-gray-800 hover:bg-gray-900 transition-colors"
+            >
+                Back to Home
+            </a>
+            <a 
+                href="https://github.com/chisel-sh/chisel" 
+                class="px-8 py-3 bg-[#EDEDED] text-[#0D0D0D] font-bold rounded-lg hover:bg-[#4DA3FF] transition-colors"
+            >
+                Follow on GitHub
+            </a>
+        </div>
+    </main>
+</Layout>

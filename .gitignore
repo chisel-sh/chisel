@@ -1,0 +1,11 @@
+node_modules
+.turbo
+dist
+.astro
+.vercel
+.netlify
+.DS_Store
+target/
+
+# Chisel Cache
+.chisel/index.db
