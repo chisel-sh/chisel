@@ -1,4 +1,5 @@
 mod tui;
+mod upgrade;
 
 use anyhow::Result;
 use chisel_render::OutputMode;
@@ -9,6 +10,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use tui::{DocsApp, IssuesApp};
 use dialoguer::{Input, Select};
+use upgrade::UpgradeService;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -39,6 +41,8 @@ enum Commands {
         #[command(subcommand)]
         command: Option<IssuesCommands>,
     },
+    /// Upgrade Chisel to the latest version
+    Upgrade,
 }
 
 #[derive(Subcommand)]
@@ -224,10 +228,22 @@ async fn main() -> Result<()> {
     };
 
     let root = std::env::current_dir()?;
+    let upgrade_service = UpgradeService::new(root.clone());
+
+    // Background update check (only in human mode)
+    if let OutputMode::Human = mode {
+        if let Ok(Some(latest)) = upgrade_service.check_for_updates().await {
+            println!("💡 A new version of Chisel is available: v{} (current: v{})", latest, env!("CARGO_PKG_VERSION"));
+            println!("👉 Run `chisel upgrade` to update.\n");
+        }
+    }
 
     match cli.command {
         Commands::Init { name } => {
             init_workspace(&root, name, mode).await?;
+        }
+        Commands::Upgrade => {
+            upgrade_service.perform_update()?;
         }
         Commands::Docs { command } => {
             let service = DocsService::new(root).await?;
