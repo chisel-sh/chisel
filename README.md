@@ -15,13 +15,9 @@ Chisel is a suite of terminal-native tools that help you organize knowledge, und
 
 ## Installation
 
-<!--
 ```bash
 curl -sL https://install.chisel.build | sh
 ```
--->
-
-*Note: Chisel is currently in private alpha. Visit [chisel.build](https://chisel.build) to join the waitlist.*
 
 ## Getting Started
 
