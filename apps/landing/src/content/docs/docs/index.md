@@ -1,39 +1,37 @@
----
-title: Chisel Docs
----
-
+# Chisel Knowledge Index
 
 Automatically managed by Chisel.
 
-- [welcome-to-chisel](welcome-to-chisel.md)
+- [index](index)
+- [welcome-to-chisel](welcome-to-chisel)
 
 ### ARCHITECTURE
-- [adapter-pattern](adapter-pattern.md)
-- [codebase-overview](codebase-overview.md)
-- [integration-strategy](integration-strategy.md)
+- [adapter-pattern](architecture/adapter-pattern)
+- [codebase-overview](architecture/codebase-overview)
+- [integration-strategy](architecture/integration-strategy)
 
 ### COMMUNITY
-- [contributing](contributing.md)
-- [development-setup](development-setup.md)
+- [contributing](community/contributing)
+- [development-setup](community/development-setup)
 
 ### GUIDE
-- [ai-integration](ai-integration.md)
-- [getting-started](getting-started.md)
-- [managing-issues](managing-issues.md)
-- [working-with-docs](working-with-docs.md)
+- [ai-integration](guide/ai-integration)
+- [getting-started](guide/getting-started)
+- [managing-issues](guide/managing-issues)
+- [working-with-docs](guide/working-with-docs)
 
 ### INTEGRATIONS
-- [starlight](starlight.md)
+- [starlight](integrations/starlight)
 
 ### INTRODUCTION
-- [core-concepts](core-concepts.md)
-- [vision](vision.md)
+- [core-concepts](introduction/core-concepts)
+- [vision](introduction/vision)
 
 ### REFERENCE
-- [index](index.md)
-- [cli](cli.md)
-- [docs](docs.md)
-- [issues](issues.md)
+- [index](reference/index)
+- [cli](reference/cli)
+- [docs](reference/docs)
+- [issues](reference/issues)
 
 ### TUTORIAL
-- [working-with-docs](working-with-docs.md)
+- [working-with-docs](tutorial/working-with-docs)

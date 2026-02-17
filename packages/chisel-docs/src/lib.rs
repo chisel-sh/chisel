@@ -504,11 +504,15 @@ impl DocsService {
             }
 
             let name = doc.path.file_stem().map_or("Unknown", |s| s.to_str().unwrap_or(""));
-            index_content.push_str(&format!("- [{}]({})\n", name, doc.name));
+            let link = self.source.index_link(&doc);
+            index_content.push_str(&format!("- [{}]({})\n", name, link));
         }
 
-        let index_path = self.source.root().join("INDEX.md");
-        fs::write(index_path, index_content)?;
+        let mut final_content = String::from("---\ntitle: Chisel Docs\n---\n\n");
+        final_content.push_str(&index_content);
+
+        let index_path = self.source.root().join("index.md");
+        fs::write(index_path, final_content)?;
         Ok(())
     }
 

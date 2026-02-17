@@ -146,4 +146,13 @@ impl DataSource for StarlightSource {
     fn root(&self) -> PathBuf {
         self.root.clone()
     }
+
+    fn index_link(&self, doc: &Doc) -> String {
+        if let Ok(rel) = doc.path.strip_prefix(&self.root) {
+            let link = rel.with_extension("");
+            link.to_string_lossy().into_owned()
+        } else {
+            doc.path.file_stem().map_or(String::new(), |s| s.to_string_lossy().into_owned())
+        }
+    }
 }
