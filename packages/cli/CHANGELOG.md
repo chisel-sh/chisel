@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.6](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.5...chisel-v0.1.6) - 2026-02-17
+
+### Other
+
+- update Cargo.toml dependencies
+
 ## [0.1.5](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.4...chisel-v0.1.5) - 2026-02-17
 
 ### Added
