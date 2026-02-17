@@ -4,6 +4,8 @@ use std::env;
 use std::process::Command;
 use std::path::Path;
 
+pub mod config;
+
 pub fn slugify_title(title: &str) -> String {
     slugify(title)
 }

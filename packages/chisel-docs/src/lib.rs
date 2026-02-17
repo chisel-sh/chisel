@@ -4,7 +4,7 @@ use std::path::{PathBuf, Path};
 use std::fs;
 use chrono::{DateTime, Utc};
 use chisel_store::{Store, SearchResult};
-use chisel_fs::{slugify_title, spawn_editor};
+use chisel_fs::{slugify_title, spawn_editor, config::ChiselConfig};
 use chisel_render::Renderable;
 
 pub mod source;
@@ -254,8 +254,14 @@ pub struct DocsService {
 impl DocsService {
     pub async fn new(root: PathBuf) -> Result<Self> {
         let store = Store::new(root.clone()).await?;
+        let config = ChiselConfig::load(&root).unwrap_or_default();
         
-        let starlight_path = root.join("src").join("content").join("docs");
+        let starlight_path = config.docs.as_ref()
+            .and_then(|d| d.source.clone())
+            .map(|s| root.join(s))
+            .filter(|p| p.exists())
+            .unwrap_or_else(|| root.join("src").join("content").join("docs"));
+
         let source: Box<dyn DataSource> = if starlight_path.exists() {
             Box::new(StarlightSource::new(starlight_path))
         } else {

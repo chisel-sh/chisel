@@ -5,7 +5,6 @@ tags: [reference, cli]
 order: 1
 ---
 
-# CLI Reference
 
 Chisel is a suite of terminal-native tools. All commands support a `--machine` flag for LLM-friendly output.
 

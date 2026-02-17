@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:10:00Z
 tags: [ai, machine-mode, automation]
 ---
 
-# AI Integration Guide
 
 Chisel is designed from the ground up to be the bridge between human developers and AI agents (like Gemini, Claude, or GPT).
 

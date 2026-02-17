@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:50:00Z
 tags: [integrations, starlight, astro]
 ---
 
-# Astro Starlight Integration
 
 Chisel can automatically adapt to projects using the **Astro Starlight** documentation framework.
 
@@ -36,7 +35,6 @@ sidebar:
 If your Starlight docs are in a non-standard location, or if you want to force Chisel to use a specific directory, you can currently use a symlink:
 
 ```bash
-# Force Chisel to use a specific directory
 ln -s custom/docs/path .chisel/docs
 ```
 

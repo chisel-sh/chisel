@@ -7,7 +7,6 @@ tags:
 order: null
 ---
 
-# Contributing to Chisel
 
 We welcome contributions of all kinds: bug fixes, feature requests, documentation, and new adapters!
 

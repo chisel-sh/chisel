@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:45:00Z
 tags: [guide, issues, kanban]
 ---
 
-# Managing Issues
 
 Chisel Issues provides a text-first Kanban workflow that lives alongside your code.
 

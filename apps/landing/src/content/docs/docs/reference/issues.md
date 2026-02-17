@@ -5,7 +5,6 @@ tags: [reference, issues]
 order: 3
 ---
 
-# Chisel Issues Reference
 
 Chisel Issues is a text-first issue tracker.
 

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Terminal Background -->
+  <rect width="32" height="32" rx="6" fill="#0D0D0D"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#333333" stroke-opacity="0.5"/>
+  
+  <!-- "c" character in a robust monospace style -->
+  <path d="M10 12C10 10.8954 10.8954 10 12 10H18V13H12V20H18V23H12C10.8954 23 10 22.1046 10 21V12Z" fill="#EDEDED"/>
+  
+  <!-- The Cursor "_" -->
+  <rect x="20" y="21" width="6" height="2" fill="#4DA3FF">
+    <animate attributeName="opacity" values="1;0;1" dur="1.5s" repeatCount="indefinite" />
+  </rect>
+</svg>
