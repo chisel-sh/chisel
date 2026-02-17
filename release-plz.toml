@@ -4,6 +4,7 @@
 [workspace]
 # Settings here apply to all packages in the workspace
 semver_check = true
+update_pr = true
 # release-plz uses Conventional Commits by default.
 
 [[package]]
