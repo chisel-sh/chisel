@@ -1,4 +1,8 @@
-# Chisel Knowledge Index
+---
+title: Chisel Docs
+---
+
+# Chisel Docs
 
 Automatically managed by Chisel.
 

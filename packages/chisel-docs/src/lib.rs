@@ -491,8 +491,7 @@ impl DocsService {
             }
         });
 
-        let mut index_content = String::from("# Chisel Knowledge Index\n\n");
-        index_content.push_str("Automatically managed by Chisel.\n\n");
+        let mut index_content = String::new();
 
         let mut current_category = None;
 
@@ -508,7 +507,8 @@ impl DocsService {
             index_content.push_str(&format!("- [{}]({})\n", name, link));
         }
 
-        let mut final_content = String::from("---\ntitle: Chisel Docs\n---\n\n");
+        let mut final_content = String::from("---\ntitle: Chisel Docs\n---\n\n# Chisel Docs\n\n");
+        final_content.push_str("Automatically managed by Chisel.\n\n");
         final_content.push_str(&index_content);
 
         let index_path = self.source.root().join("index.md");
