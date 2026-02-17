@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:05:00Z
 tags: [concepts, fundamentals]
 ---
 
-# Core Concepts
 
 Understanding how Chisel structures information will help you get the most out of the tool suite.
 

@@ -5,7 +5,6 @@ tags: [reference, docs]
 order: 2
 ---
 
-# Chisel Docs Reference
 
 Chisel Docs is a Markdown-first knowledge base.
 

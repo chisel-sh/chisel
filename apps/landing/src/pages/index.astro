@@ -15,6 +15,12 @@ import { DualModeVideo } from "../components/DualModeVideo";
     ]}
 >
     <MarqueeBanner />
+    <nav class="max-w-6xl mx-auto px-4 py-6 flex justify-end">
+        <a href="/docs" class="text-sm font-mono text-gray-400 hover:text-[#4DA3FF] transition-colors flex items-center gap-2 group">
+            Documentation 
+            <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </a>
+    </nav>
     <main class="max-w-6xl mx-auto px-4 py-20 sm:py-32">
         <!-- Hero Section -->
         <section class="text-center mb-24">
@@ -537,13 +543,20 @@ import { DualModeVideo } from "../components/DualModeVideo";
                 the future of text-first tools.
             </p>
 
-            <div class="flex flex-col items-center gap-6">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <a
+                    href="/docs/welcome-to-chisel"
+                    class="px-8 py-4 bg-[#EDEDED] text-[#0D0D0D] font-bold rounded-lg hover:bg-[#4DA3FF] transition-all transform hover:-translate-y-1 w-full sm:w-auto"
+                >
+                    View Documentation
+                </a>
                 <a
                     href="https://github.com/chisel-sh/chisel"
-                    class="px-8 py-4 bg-[#EDEDED] text-[#0D0D0D] font-bold rounded-lg hover:bg-[#4DA3FF] transition-all transform hover:-translate-y-1"
+                    class="px-8 py-4 bg-transparent border border-gray-800 text-[#EDEDED] font-bold rounded-lg hover:border-[#4DA3FF] transition-all w-full sm:w-auto"
                 >
                     View on GitHub
                 </a>
+            </div>
                 <p class="text-gray-500 font-mono text-xs">
                     v0.1.0-alpha • FSL-1.1-Apache-2.0 Licensed
                 </p>

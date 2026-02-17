@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:35:00Z
 tags: [guide, onboarding]
 ---
 
-# Getting Started
 
 Welcome to Chisel! This guide will get you up and running in less than 5 minutes.
 

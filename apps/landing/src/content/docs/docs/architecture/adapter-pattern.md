@@ -8,7 +8,6 @@ tags:
 order: null
 ---
 
-# The Adapter Pattern
 
 To remain "Source Agnostic," Chisel relies on the **Adapter Pattern** implemented via Rust traits. This allows Chisel to manage documentation and issues regardless of where they are stored.
 

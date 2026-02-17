@@ -5,7 +5,6 @@ tags: [reference]
 order: 0
 ---
 
-# Reference
 
 Technical details and command references for the Chisel suite.
 

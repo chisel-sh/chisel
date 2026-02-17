@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:00:00Z
 tags: [vision, philosophy]
 ---
 
-# Chisel: Text-First Tools
 
 Chisel is built on a simple metaphor: a precise, durable tool used to shape raw material into something useful. In our case, the material is **information**.
 

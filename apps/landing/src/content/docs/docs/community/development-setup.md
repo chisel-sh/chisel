@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:30:00Z
 tags: [community, development, setup]
 ---
 
-# Development Setup
 
 Follow these steps to set up Chisel for local development.
 

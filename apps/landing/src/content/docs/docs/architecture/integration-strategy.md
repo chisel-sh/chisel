@@ -1,4 +1,7 @@
-# Architecture: Integration & Adapter API
+---
+title: Integration Strategy
+---
+
 
 ## Motivation
 Chisel is designed to be decoupled from specific storage conventions. To support tools like **Astro Starlight**, **Obsidian**, or **Logseq**, we use an "Adapter Pattern" that separates core logic (TUI, Indexing, LLM Search) from the data source (File System, Metadata conventions).

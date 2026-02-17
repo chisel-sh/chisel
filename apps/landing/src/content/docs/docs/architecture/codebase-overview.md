@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:15:00Z
 tags: [architecture, internal, development]
 ---
 
-# Codebase Overview
 
 Chisel is organized as a Rust workspace with decoupled packages to ensure maintainability and testability.
 

@@ -4,7 +4,6 @@ created_at: 2026-02-15T15:40:00Z
 tags: [guide, docs, organization]
 ---
 
-# Working with Docs
 
 Chisel Docs is more than just a file browser; it's a structured knowledge base designed for high-speed navigation.
 
