@@ -1,0 +1,43 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0" y1="0" x2="0" y2="1">
+       <stop offset="0%" stop-color="#1A1A1A"/>
+       <stop offset="100%" stop-color="#050505"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#222" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.3"/>
+
+  <!-- Logo Group (Centered horizontally) -->
+  <!-- Logo is 32x32. Scale 8x -> 256x256. 
+       Center X: 600 - 128 = 472.
+       Position Y: 120.
+  -->
+  <g transform="translate(472, 100) scale(8)">
+      <!-- Shadow/Glow -->
+      <rect x="2" y="2" width="28" height="28" rx="6" fill="#4DA3FF" opacity="0.1" filter="blur(4px)"/>
+      
+      <!-- Main Logo Content -->
+      <rect width="32" height="32" rx="6" fill="#0D0D0D"/>
+      <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#333333" stroke-opacity="0.5"/>
+      <path d="M10 12C10 10.8954 10.8954 10 12 10H18V13H12V20H18V23H12C10.8954 23 10 22.1046 10 21V12Z" fill="#EDEDED"/>
+      
+      <!-- Cursor "_" -->
+      <rect x="20" y="21" width="6" height="2" fill="#4DA3FF" />
+  </g>
+
+  <!-- Text Content -->
+  <g font-family="'JetBrains Mono', 'Fira Code', 'Courier New', monospace" text-anchor="middle">
+      
+      <!-- Title -->
+      <text x="600" y="440" font-size="80" font-weight="bold" fill="#EDEDED" letter-spacing="-4">chisel<tspan fill="#4DA3FF">_</tspan></text>
+      
+      <!-- Tagline -->
+      <text x="600" y="520" font-size="32" fill="#CCCCCC">Text-first tools for humans and LLMs.</text>
+  </g>
+</svg>
