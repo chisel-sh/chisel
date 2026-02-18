@@ -2,8 +2,6 @@
 
 Chisel is distributed under the **Functional Source License, Version 1.1** (FSL-1.1-Apache-2.0).
 
-The libraries in `packages/` are additionally available under the **Apache License, Version 2.0**.
-
 ---
 
 ## Functional Source License, Version 1.1, ALv2 Future License
