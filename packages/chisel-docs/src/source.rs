@@ -22,4 +22,7 @@ pub trait DataSource: Send + Sync {
 
     /// Get the root directory of the source
     fn root(&self) -> PathBuf;
+
+    /// Get the relative link for a document in the index
+    fn index_link(&self, doc: &Doc) -> String;
 }

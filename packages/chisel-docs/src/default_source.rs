@@ -108,4 +108,8 @@ impl DataSource for DefaultSource {
     fn root(&self) -> PathBuf {
         self.root.clone()
     }
+
+    fn index_link(&self, doc: &Doc) -> String {
+        doc.name.clone()
+    }
 }
