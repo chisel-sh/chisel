@@ -1,6 +1,6 @@
 ---
 title: Move auto-generated index page
-status: in-progress
+status: done
 priority: high
 labels:
 - docs
