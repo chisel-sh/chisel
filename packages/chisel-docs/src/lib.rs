@@ -507,12 +507,26 @@ impl DocsService {
             index_content.push_str(&format!("- [{}]({})\n", name, link));
         }
 
-        let mut final_content = String::from("---\ntitle: Chisel Docs\n---\n\n# Chisel Docs\n\n");
+        let index_path = self.source.root().join("index.md");
+        let contents_path = self.source.root().join("contents.md");
+
+        let user_index_content = "---\ntitle: Welcome to Chisel Docs\n---\n\n# Welcome to Chisel Docs\n\nThis is your documentation home page. It is now safe to edit!\n\n- [View Table of Contents](contents)\n";
+
+        if index_path.exists() {
+            if let Ok(content) = fs::read_to_string(&index_path) {
+                if content.contains("Automatically managed by Chisel.") {
+                     fs::write(&index_path, user_index_content)?;
+                }
+            }
+        } else {
+             fs::write(&index_path, user_index_content)?;
+        }
+
+        let mut final_content = String::from("---\ntitle: Table of Contents\n---\n\n# Table of Contents\n\n");
         final_content.push_str("Automatically managed by Chisel.\n\n");
         final_content.push_str(&index_content);
 
-        let index_path = self.source.root().join("index.md");
-        fs::write(index_path, final_content)?;
+        fs::write(contents_path, final_content)?;
         Ok(())
     }
 
