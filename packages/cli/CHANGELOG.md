@@ -3,15 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.7](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.6...chisel-v0.1.7) - 2026-02-20
 
-### Other
+### Features
 
-- update Cargo.toml dependencies
+- move auto-generated index to contents.md & enable user-curated landing page ([#20](https://github.com/chisel-sh/chisel/pull/20))
+- web-friendly index generation ([#18](https://github.com/chisel-sh/chisel/pull/18))
 
 ## [0.1.6](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.5...chisel-v0.1.6) - 2026-02-17
 
-### Other
+### Features
 
-- update Cargo.toml dependencies
+- integrate Starlight docs and configurable paths ([#16](https://github.com/chisel-sh/chisel/pull/16))
+
+### Docs
+
+- add netlify redirect for install subdomain ([#15](https://github.com/chisel-sh/chisel/pull/15))
 
 ## [0.1.5](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.4...chisel-v0.1.5) - 2026-02-17
 
