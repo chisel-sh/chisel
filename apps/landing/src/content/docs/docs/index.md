@@ -1,41 +1,44 @@
 ---
-title: Chisel Docs
+title: Chisel Documentation
+description: Official documentation for Chisel - text-first tools for developers and AI.
+template: splash
+hero:
+  tagline: Text-first tools for shaping information. Crafted for developers, structured for AI.
+  image:
+    file: ../../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /docs/guide/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/chisel-sh/chisel
+      icon: external
 ---
 
-# Chisel Docs
+## Explore the Toolkit
 
-Automatically managed by Chisel.
+### 📖 [Chisel Docs](/docs/reference/docs/)
+A knowledge base that understands structure. Markdown-first, git-backed, and local-first.
 
-- [index](index)
-- [welcome-to-chisel](welcome-to-chisel)
+### 📋 [Chisel Issues](/docs/reference/issues/)
+A text-first issue tracker. Manage work with local files and a clean TUI board.
 
-### ARCHITECTURE
-- [adapter-pattern](architecture/adapter-pattern)
-- [codebase-overview](architecture/codebase-overview)
-- [integration-strategy](architecture/integration-strategy)
+### ⚙️ [CLI Reference](/docs/reference/cli/)
+Comprehensive reference for the `chisel` command-line interface.
 
-### COMMUNITY
-- [contributing](community/contributing)
-- [development-setup](community/development-setup)
+### 🧩 [Architecture](/docs/introduction/core-concepts/)
+Deep dive into Chisel's Rust-powered, local-first architecture.
 
-### GUIDE
-- [ai-integration](guide/ai-integration)
-- [getting-started](guide/getting-started)
-- [managing-issues](guide/managing-issues)
-- [working-with-docs](guide/working-with-docs)
+---
 
-### INTEGRATIONS
-- [starlight](integrations/starlight)
+## Why Chisel?
 
-### INTRODUCTION
-- [core-concepts](introduction/core-concepts)
-- [vision](introduction/vision)
+- **Text-First**: Everything is a file. No databases to manage, no proprietary formats.
+- **AI-Ready**: Every tool supports a "Machine Mode" optimized for LLM context windows.
+- **Fast**: Built in Rust for sub-10ms latency.
+- **Open Source**: FSL-1.1 licensed (converts to Apache 2.0). You own your tools.
 
-### REFERENCE
-- [index](reference/index)
-- [cli](reference/cli)
-- [docs](reference/docs)
-- [issues](reference/issues)
+---
 
-### TUTORIAL
-- [working-with-docs](tutorial/working-with-docs)
+[View Full Table of Contents](/docs/contents)
