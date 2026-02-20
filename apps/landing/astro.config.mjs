@@ -26,13 +26,6 @@ export default defineConfig({
     react(),
     starlight({
       title: 'Chisel',
-      defaultLocale: 'docs',
-      locales: {
-        docs: {
-          label: 'Docs',
-          lang: 'en',
-        },
-      },
       logo: {
         src: './src/assets/logo.svg',
       },
@@ -42,31 +35,31 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Introduction',
-          autogenerate: { directory: 'introduction' },
+          autogenerate: { directory: 'docs/introduction' },
         },
         {
           label: 'Guide',
-          autogenerate: { directory: 'guide' },
+          autogenerate: { directory: 'docs/guide' },
         },
         {
           label: 'Reference',
-          autogenerate: { directory: 'reference' },
+          autogenerate: { directory: 'docs/reference' },
         },
         {
           label: 'Architecture',
-          autogenerate: { directory: 'architecture' },
+          autogenerate: { directory: 'docs/architecture' },
         },
         {
           label: 'Community',
-          autogenerate: { directory: 'community' },
+          autogenerate: { directory: 'docs/community' },
         },
         {
           label: 'Tutorials',
-          autogenerate: { directory: 'tutorial' },
+          autogenerate: { directory: 'docs/tutorial' },
         },
         {
           label: 'Integrations',
-          autogenerate: { directory: 'integrations' },
+          autogenerate: { directory: 'docs/integrations' },
         },
       ],
       customCss: ['./src/styles/global.css'],
