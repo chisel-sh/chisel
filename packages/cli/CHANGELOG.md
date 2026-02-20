@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.8](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.7...chisel-v0.1.8) - 2026-02-20
+
+### Other
+
+- *(changelog)* clean up and backfill PR entries for v0.1.6 and v0.1.7
+
 ## [0.1.7](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.6...chisel-v0.1.7) - 2026-02-20
 
 ### Features
