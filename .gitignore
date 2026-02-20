@@ -9,3 +9,4 @@ target/
 
 # Chisel Cache
 .chisel/index.db
+.chisel/update_check.json
