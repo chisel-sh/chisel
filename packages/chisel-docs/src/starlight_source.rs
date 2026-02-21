@@ -1,11 +1,15 @@
-use async_trait::async_trait;
+use crate::{
+    parsing::{parse_frontmatter, parse_sections},
+    source::DataSource,
+    Doc,
+};
 use anyhow::Result;
-use std::path::PathBuf;
-use std::fs;
-use ignore::WalkBuilder;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use ignore::WalkBuilder;
 use serde::{Deserialize, Serialize};
-use crate::{Doc, parsing::{parse_frontmatter, parse_sections}, source::DataSource};
+use std::fs;
+use std::path::PathBuf;
 
 pub struct StarlightSource {
     pub root: PathBuf,
@@ -48,10 +52,8 @@ impl DataSource for StarlightSource {
         for entry in walker.filter_map(|e| e.ok()) {
             let path = entry.path();
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            
-            if entry.file_type().is_some_and(|ft| ft.is_file()) 
-               && (ext == "md" || ext == "mdx")
-            {
+
+            if entry.file_type().is_some_and(|ft| ft.is_file()) && (ext == "md" || ext == "mdx") {
                 let doc = self.load(path.to_path_buf()).await?;
                 docs.push(doc);
             }
@@ -63,10 +65,10 @@ impl DataSource for StarlightSource {
         let metadata = fs::metadata(&path)?;
         let updated_at: DateTime<Utc> = metadata.modified()?.into();
         let raw_content = fs::read_to_string(&path)?;
-        
+
         let (raw_fm, content) = parse_frontmatter(&raw_content);
         let sections = parse_sections(&content);
-        
+
         let mut fm = None;
         if let Some(rf) = raw_fm {
             // Map common fields. Note: We are using Chisel's DocFrontmatter here.
@@ -74,12 +76,12 @@ impl DataSource for StarlightSource {
             // Ideally we'd parse as StarlightFrontmatter first.
             // For MVP, we assume Chisel writes the files or we just read 'title'.
             // But to support 'sidebar.order', we need custom parsing.
-            
-            // Re-parse raw frontmatter block manually? 
+
+            // Re-parse raw frontmatter block manually?
             // parse_frontmatter returns DocFrontmatter which is Chisel specific.
             // We need to access the raw YAML string to parse Starlight schema.
             // But parse_frontmatter consumes it.
-            
+
             // Workaround: We'll stick to Chisel schema for now, but in a real implementation
             // we would parse `serde_yaml::Value` to extract sidebar.order.
             fm = Some(rf);
@@ -94,7 +96,9 @@ impl DataSource for StarlightSource {
         };
 
         Ok(Doc {
-            name: path.file_name().map_or(String::new(), |n| n.to_string_lossy().into_owned()),
+            name: path
+                .file_name()
+                .map_or(String::new(), |n| n.to_string_lossy().into_owned()),
             path,
             updated_at,
             content: Some(content),
@@ -109,12 +113,16 @@ impl DataSource for StarlightSource {
         // For MVP, we save as Chisel standard (Starlight ignores extra fields)
         let mut content = String::new();
         if let Some(fm) = &doc.frontmatter {
-            content.push_str("---
-");
+            content.push_str(
+                "---
+",
+            );
             content.push_str(&serde_yaml::to_string(fm)?);
-            content.push_str("---
+            content.push_str(
+                "---
 
-");
+",
+            );
         }
         if let Some(body) = &doc.content {
             content.push_str(body);
@@ -152,7 +160,9 @@ impl DataSource for StarlightSource {
             let link = rel.with_extension("");
             link.to_string_lossy().into_owned()
         } else {
-            doc.path.file_stem().map_or(String::new(), |s| s.to_string_lossy().into_owned())
+            doc.path
+                .file_stem()
+                .map_or(String::new(), |s| s.to_string_lossy().into_owned())
         }
     }
 }

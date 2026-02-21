@@ -1,10 +1,12 @@
-use async_trait::async_trait;
+use crate::{
+    parsing::load_issue_from_file, source::IssueSource, Issue, IssueFrontmatter, IssueStatus,
+};
 use anyhow::Result;
-use std::path::PathBuf;
-use std::fs;
-use glob::glob;
+use async_trait::async_trait;
 use chisel_fs::slugify_title;
-use crate::{Issue, IssueStatus, IssueFrontmatter, source::IssueSource, parsing::load_issue_from_file};
+use glob::glob;
+use std::fs;
+use std::path::PathBuf;
 
 pub struct DefaultIssueSource {
     pub root: PathBuf,

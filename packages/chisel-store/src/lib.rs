@@ -77,7 +77,15 @@ impl Store {
         Ok(())
     }
 
-    pub async fn update_doc(&self, path: &str, name: &str, title: Option<&str>, tags: Option<&str>, content: &str, created_at: Option<chrono::DateTime<chrono::Utc>>) -> Result<()> {
+    pub async fn update_doc(
+        &self,
+        path: &str,
+        name: &str,
+        title: Option<&str>,
+        tags: Option<&str>,
+        content: &str,
+        created_at: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> Result<()> {
         sqlx::query(
             "INSERT INTO documents (path, name, title, tags, content, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -101,10 +109,7 @@ impl Store {
         Ok(())
     }
 
-    pub async fn update_issue(
-        &self,
-        params: UpdateIssueParams<'_>,
-    ) -> Result<()> {
+    pub async fn update_issue(&self, params: UpdateIssueParams<'_>) -> Result<()> {
         sqlx::query(
             "INSERT INTO issues (id, path, title, status, priority, labels, content, \"order\", created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
@@ -150,7 +155,14 @@ impl Store {
     }
 
     pub async fn fuzzy_search(&self, query: &str) -> Result<Vec<SearchResult>> {
-        let sql_query = format!("%{}%", query.chars().map(|c| c.to_string()).collect::<Vec<String>>().join("%"));
+        let sql_query = format!(
+            "%{}%",
+            query
+                .chars()
+                .map(|c| c.to_string())
+                .collect::<Vec<String>>()
+                .join("%")
+        );
         let results = sqlx::query_as::<_, SearchResult>(
             "SELECT path, name, SUBSTR(content, 1, 100) as excerpt
              FROM documents
@@ -165,6 +177,52 @@ impl Store {
         .await?;
 
         Ok(results)
+    }
+
+    pub async fn fetch_context(&self, query: &str) -> Result<Vec<ContextItem>> {
+        let mut items = Vec::new();
+
+        // 1. Fetch Docs
+        let docs = sqlx::query_as::<_, (String, String)>(
+            "SELECT path, content
+             FROM documents_fts
+             WHERE documents_fts MATCH ?
+             ORDER BY rank
+             LIMIT 10",
+        )
+        .bind(query)
+        .fetch_all(&self.pool)
+        .await?;
+
+        for (path, content) in docs {
+            items.push(ContextItem {
+                path,
+                content,
+                r#type: "document".to_string(),
+            });
+        }
+
+        // 2. Fetch Issues
+        let issues = sqlx::query_as::<_, (String, String)>(
+            "SELECT path, content
+             FROM issues_fts
+             WHERE issues_fts MATCH ?
+             ORDER BY rank
+             LIMIT 10",
+        )
+        .bind(query)
+        .fetch_all(&self.pool)
+        .await?;
+
+        for (path, content) in issues {
+            items.push(ContextItem {
+                path,
+                content,
+                r#type: "issue".to_string(),
+            });
+        }
+
+        Ok(items)
     }
 
     pub async fn get_all_results(&self) -> Result<Vec<SearchResult>> {
@@ -195,7 +253,7 @@ impl Store {
             )
         };
 
-        let results = query.fetch_all(&self.pool) .await?;
+        let results = query.fetch_all(&self.pool).await?;
         Ok(results)
     }
 }
@@ -206,22 +264,44 @@ mod tests {
 
     async fn test_store(name: &str) -> Store {
         let url = format!("sqlite:file:{}?mode=memory&cache=shared", name);
-        Store::new_with_url(&url).await.expect("Failed to create in-memory store")
+        Store::new_with_url(&url)
+            .await
+            .expect("Failed to create in-memory store")
     }
 
     #[tokio::test]
     async fn test_doc_crud() {
         let store = test_store("doc_crud").await;
-        
+
         // Create
-        store.update_doc("test.md", "test", Some("Test Title"), Some("tag1, tag2"), "Content here", None).await.unwrap();
-        
+        store
+            .update_doc(
+                "test.md",
+                "test",
+                Some("Test Title"),
+                Some("tag1, tag2"),
+                "Content here",
+                None,
+            )
+            .await
+            .unwrap();
+
         let results = store.get_all_results().await.unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].name, "test");
-        
+
         // Update
-        store.update_doc("test.md", "test", Some("New Title"), None, "New Content", None).await.unwrap();
+        store
+            .update_doc(
+                "test.md",
+                "test",
+                Some("New Title"),
+                None,
+                "New Content",
+                None,
+            )
+            .await
+            .unwrap();
         let results = store.get_all_results().await.unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].excerpt, "New Content");
@@ -233,34 +313,40 @@ mod tests {
         let now = chrono::Utc::now();
 
         // Create
-        store.update_issue(UpdateIssueParams {
-            id: 1,
-            path: "issues/0001.md",
-            title: "Issue 1",
-            status: "todo",
-            priority: "high",
-            labels: None,
-            content: "Fix it",
-            order: 0,
-            created_at: now,
-        }).await.unwrap();
-        
+        store
+            .update_issue(UpdateIssueParams {
+                id: 1,
+                path: "issues/0001.md",
+                title: "Issue 1",
+                status: "todo",
+                priority: "high",
+                labels: None,
+                content: "Fix it",
+                order: 0,
+                created_at: now,
+            })
+            .await
+            .unwrap();
+
         let issues = store.get_issues(None).await.unwrap();
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].title, "Issue 1");
-        
+
         // Update status
-        store.update_issue(UpdateIssueParams {
-            id: 1,
-            path: "issues/0001.md",
-            title: "Issue 1",
-            status: "in-progress",
-            priority: "high",
-            labels: None,
-            content: "Fix it",
-            order: 0,
-            created_at: now,
-        }).await.unwrap();
+        store
+            .update_issue(UpdateIssueParams {
+                id: 1,
+                path: "issues/0001.md",
+                title: "Issue 1",
+                status: "in-progress",
+                priority: "high",
+                labels: None,
+                content: "Fix it",
+                order: 0,
+                created_at: now,
+            })
+            .await
+            .unwrap();
         let issues = store.get_issues(Some("in-progress")).await.unwrap();
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].status, "in-progress");
@@ -274,21 +360,102 @@ mod tests {
     #[tokio::test]
     async fn test_search() {
         let store = test_store("search").await;
-        
-        store.update_doc("a.md", "a", Some("Rust"), None, "Rust is a systems programming language.", None).await.unwrap();
-        store.update_doc("b.md", "b", Some("Go"), None, "Go is an open source programming language.", None).await.unwrap();
+
+        store
+            .update_doc(
+                "a.md",
+                "a",
+                Some("Rust"),
+                None,
+                "Rust is a systems programming language.",
+                None,
+            )
+            .await
+            .unwrap();
+        store
+            .update_doc(
+                "b.md",
+                "b",
+                Some("Go"),
+                None,
+                "Go is an open source programming language.",
+                None,
+            )
+            .await
+            .unwrap();
 
         let rust_results = store.search_fts::<SearchResult>("Rust").await.unwrap();
         assert_eq!(rust_results.len(), 1);
         assert_eq!(rust_results[0].name, "a");
 
-        let prog_results = store.search_fts::<SearchResult>("programming").await.unwrap();
+        let prog_results = store
+            .search_fts::<SearchResult>("programming")
+            .await
+            .unwrap();
         assert_eq!(prog_results.len(), 2);
 
         // Fuzzy search
         let fuzzy_results = store.fuzzy_search("rs").await.unwrap();
         assert_eq!(fuzzy_results.len(), 1);
         assert_eq!(fuzzy_results[0].name, "a");
+    }
+
+    #[tokio::test]
+    async fn test_fetch_context() {
+        let store = test_store("context").await;
+
+        // Seed Docs
+        store
+            .update_doc(
+                "doc1.md",
+                "doc1",
+                Some("Context Doc"),
+                None,
+                "This is relevant context about routing.",
+                None,
+            )
+            .await
+            .unwrap();
+        store
+            .update_doc(
+                "doc2.md",
+                "doc2",
+                Some("Other Doc"),
+                None,
+                "This is irrelevant.",
+                None,
+            )
+            .await
+            .unwrap();
+
+        // Seed Issues
+        store
+            .update_issue(UpdateIssueParams {
+                id: 1,
+                path: "issue1.md",
+                title: "Context Issue",
+                status: "open",
+                priority: "high",
+                labels: None,
+                content: "We need to fix the routing bug.",
+                order: 0,
+                created_at: chrono::Utc::now(),
+            })
+            .await
+            .unwrap();
+
+        // Search for "routing"
+        let results = store.fetch_context("routing").await.unwrap();
+
+        assert_eq!(results.len(), 2); // 1 doc + 1 issue
+
+        let doc = results.iter().find(|i| i.r#type == "document").unwrap();
+        assert_eq!(doc.path, "doc1.md");
+        assert!(doc.content.contains("relevant context"));
+
+        let issue = results.iter().find(|i| i.r#type == "issue").unwrap();
+        assert_eq!(issue.path, "issue1.md");
+        assert!(issue.content.contains("fix the routing bug"));
     }
 }
 
@@ -311,4 +478,11 @@ pub struct SearchResult {
     pub path: String,
     pub name: String,
     pub excerpt: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct ContextItem {
+    pub path: String,
+    pub content: String,
+    pub r#type: String,
 }

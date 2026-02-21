@@ -1,6 +1,6 @@
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use anyhow::Result;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ChiselConfig {

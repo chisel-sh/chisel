@@ -2,15 +2,32 @@ mod tui;
 mod upgrade;
 
 use anyhow::Result;
+use chisel_docs::{DocsService, ListOptions};
+use chisel_issues::{IssuePriority, IssueStatus, IssuesService};
 use chisel_render::OutputMode;
-use chisel_docs::{ListOptions, DocsService};
-use chisel_issues::{IssuesService, IssuePriority, IssueStatus};
+use chisel_store::{ContextItem, Store};
 use clap::{Parser, Subcommand};
+use dialoguer::{Input, Select};
 use std::path::PathBuf;
 use std::str::FromStr;
 use tui::{DocsApp, IssuesApp};
-use dialoguer::{Input, Select};
 use upgrade::UpgradeService;
+
+fn format_context_xml(items: Vec<ContextItem>) -> String {
+    let mut output = String::from("<context>\n");
+    for item in items {
+        let tag = if item.r#type == "issue" {
+            "issue"
+        } else {
+            "file"
+        };
+        output.push_str(&format!("  <{} path=\"{}\">\n", tag, item.path));
+        output.push_str(&item.content);
+        output.push_str(&format!("\n  </{}>\n", tag));
+    }
+    output.push_str("</context>");
+    output
+}
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -41,8 +58,22 @@ enum Commands {
         #[command(subcommand)]
         command: Option<IssuesCommands>,
     },
+    /// Generate context for LLMs
+    Context {
+        #[command(subcommand)]
+        command: ContextCommands,
+    },
     /// Upgrade Chisel to the latest version
     Upgrade,
+}
+
+#[derive(Subcommand)]
+enum ContextCommands {
+    /// Create a context blob for a given query
+    Create {
+        /// The search query to generate context for
+        query: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -127,7 +158,7 @@ enum DocsCommands {
     Delete {
         /// The path to the document
         path: PathBuf,
-    }
+    },
 }
 
 #[derive(Subcommand)]
@@ -150,7 +181,7 @@ enum IssuesCommands {
         /// The title of the issue
         #[arg(short, long)]
         title: Option<String>,
-        
+
         /// The priority (low, medium, high, critical)
         #[arg(short, long)]
         priority: Option<String>,
@@ -233,7 +264,11 @@ async fn main() -> Result<()> {
     // Background update check (only in human mode)
     if let OutputMode::Human = mode {
         if let Ok(Some(latest)) = upgrade_service.check_for_updates().await {
-            println!("💡 A new version of Chisel is available: v{} (current: v{})", latest, env!("CARGO_PKG_VERSION"));
+            println!(
+                "💡 A new version of Chisel is available: v{} (current: v{})",
+                latest,
+                env!("CARGO_PKG_VERSION")
+            );
             println!("👉 Run `chisel upgrade` to update.\n");
         }
     }
@@ -251,51 +286,50 @@ async fn main() -> Result<()> {
                 Some(DocsCommands::Overview) => {
                     mode.render(service.overview().await?)?;
                 }
-                Some(DocsCommands::List { path, all, no_ignore, hidden }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            let options = ListOptions {
-                                root: path,
-                                use_gitignore: !all && !no_ignore,
-                                include_hidden: all || hidden,
-                            };
-                            mode.render(service.list(options).await?)?;
-                        }
-                        OutputMode::Human => {
-                            run_docs_explorer(service, mode, None).await?;
+                Some(DocsCommands::List {
+                    path,
+                    all,
+                    no_ignore,
+                    hidden,
+                }) => match mode {
+                    OutputMode::Machine => {
+                        let options = ListOptions {
+                            root: path,
+                            use_gitignore: !all && !no_ignore,
+                            include_hidden: all || hidden,
+                        };
+                        mode.render(service.list(options).await?)?;
+                    }
+                    OutputMode::Human => {
+                        run_docs_explorer(service, mode, None).await?;
+                    }
+                },
+                Some(DocsCommands::Show { path }) => match mode {
+                    OutputMode::Machine => {
+                        if let Some(p) = path {
+                            mode.render(service.show(p).await?)?;
+                        } else {
+                            mode.render(service.overview().await?)?;
                         }
                     }
-                }
-                Some(DocsCommands::Show { path }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            if let Some(p) = path {
-                                mode.render(service.show(p).await?)?;
-                            } else {
-                                mode.render(service.overview().await?)?;
-                            }
-                        }
-                        OutputMode::Human => {
-                            run_docs_explorer(service, mode, path).await?;
-                        }
+                    OutputMode::Human => {
+                        run_docs_explorer(service, mode, path).await?;
                     }
-                }
+                },
                 Some(DocsCommands::Index { .. }) => {
                     service.index_all().await?;
                     if let OutputMode::Human = mode {
                         println!("Indexing complete.");
                     }
                 }
-                Some(DocsCommands::Search { query }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            mode.render(service.search(&query).await?)?;
-                        }
-                        OutputMode::Human => {
-                            run_docs_explorer(service, mode, None).await?;
-                        }
+                Some(DocsCommands::Search { query }) => match mode {
+                    OutputMode::Machine => {
+                        mode.render(service.search(&query).await?)?;
                     }
-                }
+                    OutputMode::Human => {
+                        run_docs_explorer(service, mode, None).await?;
+                    }
+                },
                 Some(DocsCommands::FuzzySearch { query }) => {
                     mode.render(service.fuzzy_search(&query).await?)?;
                 }
@@ -331,34 +365,30 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-                Some(DocsCommands::Edit { path }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            if let Some(p) = path {
-                                mode.render(service.edit(p).await?)?;
-                            } else {
-                                anyhow::bail!("Path is required in machine mode");
-                            }
-                        }
-                        OutputMode::Human => {
-                            run_docs_explorer(service, mode, path).await?;
+                Some(DocsCommands::Edit { path }) => match mode {
+                    OutputMode::Machine => {
+                        if let Some(p) = path {
+                            mode.render(service.edit(p).await?)?;
+                        } else {
+                            anyhow::bail!("Path is required in machine mode");
                         }
                     }
-                }
-                Some(DocsCommands::Move { path, category }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            if let Some(p) = path {
-                                mode.render(service.move_doc(p, category).await?)?;
-                            } else {
-                                anyhow::bail!("Path is required in machine mode");
-                            }
-                        }
-                        OutputMode::Human => {
-                            run_docs_explorer(service, mode, path).await?;
+                    OutputMode::Human => {
+                        run_docs_explorer(service, mode, path).await?;
+                    }
+                },
+                Some(DocsCommands::Move { path, category }) => match mode {
+                    OutputMode::Machine => {
+                        if let Some(p) = path {
+                            mode.render(service.move_doc(p, category).await?)?;
+                        } else {
+                            anyhow::bail!("Path is required in machine mode");
                         }
                     }
-                }
+                    OutputMode::Human => {
+                        run_docs_explorer(service, mode, path).await?;
+                    }
+                },
                 Some(DocsCommands::Delete { path }) => {
                     service.delete(path.clone()).await?;
                     if let OutputMode::Human = mode {
@@ -377,7 +407,8 @@ async fn main() -> Result<()> {
                     mode.render(service.list(None).await?)?;
                 }
                 Some(IssuesCommands::List { status }) => {
-                    let status_enum = status.and_then(|s| IssueStatus::from_str(&s.to_lowercase()).ok());
+                    let status_enum =
+                        status.and_then(|s| IssueStatus::from_str(&s.to_lowercase()).ok());
                     match mode {
                         OutputMode::Machine => {
                             mode.render(service.list(status_enum).await?)?;
@@ -387,34 +418,40 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-                Some(IssuesCommands::Show { id }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            mode.render(service.show(id).await?)?;
-                        }
-                        OutputMode::Human => {
-                            run_issues_explorer(service, mode, None, Some(id)).await?;
-                        }
+                Some(IssuesCommands::Show { id }) => match mode {
+                    OutputMode::Machine => {
+                        mode.render(service.show(id).await?)?;
                     }
-                }
-                Some(IssuesCommands::New { title, priority, labels }) => {
+                    OutputMode::Human => {
+                        run_issues_explorer(service, mode, None, Some(id)).await?;
+                    }
+                },
+                Some(IssuesCommands::New {
+                    title,
+                    priority,
+                    labels,
+                }) => {
                     let title = match title {
                         Some(t) => t,
                         None => {
                             if let OutputMode::Machine = mode {
                                 anyhow::bail!("Title is required in machine mode");
                             }
-                            Input::<String>::new().with_prompt("Issue Title").interact_text()?
+                            Input::<String>::new()
+                                .with_prompt("Issue Title")
+                                .interact_text()?
                         }
                     };
                     let priority = parse_priority(priority, mode)?;
-                    
-                    let label_vec = labels.map(|l| {
-                        l.split(',')
-                            .map(|s| s.trim().to_string())
-                            .filter(|s| !s.is_empty())
-                            .collect()
-                    }).unwrap_or_default();
+
+                    let label_vec = labels
+                        .map(|l| {
+                            l.split(',')
+                                .map(|s| s.trim().to_string())
+                                .filter(|s| !s.is_empty())
+                                .collect()
+                        })
+                        .unwrap_or_default();
 
                     let content = if let OutputMode::Human = mode {
                         "Enter description here..."
@@ -432,16 +469,14 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-                Some(IssuesCommands::Edit { id }) => {
-                    match mode {
-                        OutputMode::Machine => {
-                            mode.render(service.edit(id).await?)?;
-                        }
-                        OutputMode::Human => {
-                            run_issues_explorer(service, mode, None, Some(id)).await?;
-                        }
+                Some(IssuesCommands::Edit { id }) => match mode {
+                    OutputMode::Machine => {
+                        mode.render(service.edit(id).await?)?;
                     }
-                }
+                    OutputMode::Human => {
+                        run_issues_explorer(service, mode, None, Some(id)).await?;
+                    }
+                },
                 Some(IssuesCommands::Close { id }) => {
                     let issue = service.update_status(id, IssueStatus::Closed).await?;
                     mode.render(issue)?;
@@ -473,7 +508,8 @@ async fn main() -> Result<()> {
                     mode.render(issue)?;
                 }
                 Some(IssuesCommands::UpdateLabels { id, labels }) => {
-                    let label_vec = labels.split(',')
+                    let label_vec = labels
+                        .split(',')
                         .map(|s| s.trim().to_string())
                         .filter(|s| !s.is_empty())
                         .collect();
@@ -494,12 +530,26 @@ async fn main() -> Result<()> {
                 }
             }
         }
+        Commands::Context { command } => {
+            let store = Store::new(root).await?;
+            match command {
+                ContextCommands::Create { query } => {
+                    let items = store.fetch_context(&query).await?;
+                    let output = format_context_xml(items);
+                    println!("{}", output);
+                }
+            }
+        }
     }
 
     Ok(())
 }
 
-async fn init_workspace(root: &std::path::Path, name: Option<String>, mode: OutputMode) -> Result<()> {
+async fn init_workspace(
+    root: &std::path::Path,
+    name: Option<String>,
+    mode: OutputMode,
+) -> Result<()> {
     let project_name = name.unwrap_or_else(|| {
         root.file_name()
             .map(|n| n.to_string_lossy().into_owned())
@@ -553,7 +603,11 @@ async fn init_workspace(root: &std::path::Path, name: Option<String>, mode: Outp
     Ok(())
 }
 
-async fn run_docs_explorer(service: DocsService, mode: OutputMode, initial_path: Option<PathBuf>) -> Result<()> {
+async fn run_docs_explorer(
+    service: DocsService,
+    mode: OutputMode,
+    initial_path: Option<PathBuf>,
+) -> Result<()> {
     if !service.workspace_root.join(".chisel").exists() {
         if let OutputMode::Human = mode {
             println!("This directory is not a Chisel workspace.");
@@ -574,7 +628,12 @@ async fn run_docs_explorer(service: DocsService, mode: OutputMode, initial_path:
     Ok(())
 }
 
-async fn run_issues_explorer(service: IssuesService, mode: OutputMode, status_filter: Option<IssueStatus>, initial_id: Option<i64>) -> Result<()> {
+async fn run_issues_explorer(
+    service: IssuesService,
+    mode: OutputMode,
+    status_filter: Option<IssueStatus>,
+    initial_id: Option<i64>,
+) -> Result<()> {
     if !service.root.join(".chisel").exists() {
         if let OutputMode::Human = mode {
             println!("This directory is not a Chisel workspace.");
@@ -597,16 +656,13 @@ async fn run_issues_explorer(service: IssuesService, mode: OutputMode, status_fi
 
 fn parse_priority(priority: Option<String>, mode: OutputMode) -> Result<IssuePriority> {
     match priority {
-        Some(p) => {
-            IssuePriority::from_str(&p.to_lowercase())
-                .or_else(|_| {
-                    if p.to_lowercase() == "med" {
-                        Ok(IssuePriority::Medium)
-                    } else {
-                        Err(anyhow::anyhow!("Invalid priority: {}", p))
-                    }
-                })
-        }
+        Some(p) => IssuePriority::from_str(&p.to_lowercase()).or_else(|_| {
+            if p.to_lowercase() == "med" {
+                Ok(IssuePriority::Medium)
+            } else {
+                Err(anyhow::anyhow!("Invalid priority: {}", p))
+            }
+        }),
         None => {
             if let OutputMode::Machine = mode {
                 Ok(IssuePriority::Medium)
@@ -638,17 +694,48 @@ mod tests {
     async fn test_init_workspace() {
         let dir = tempdir().unwrap();
         let root = dir.path();
-        
-        init_workspace(root, Some("Test Project".to_string()), OutputMode::Machine).await.unwrap();
-        
+
+        init_workspace(root, Some("Test Project".to_string()), OutputMode::Machine)
+            .await
+            .unwrap();
+
         assert!(root.join(".chisel").exists());
         assert!(root.join(".chisel/docs/welcome-to-chisel.md").exists());
-        assert!(root.join(".chisel/docs/tutorial/working-with-docs.md").exists());
+        assert!(root
+            .join(".chisel/docs/tutorial/working-with-docs.md")
+            .exists());
         assert!(root.join(".chisel/issues").exists());
         assert!(root.join(".chisel/PROMPT.md").exists());
         assert!(root.join(".gitignore").exists());
-        
+
         let gitignore = std::fs::read_to_string(root.join(".gitignore")).unwrap();
         assert!(gitignore.contains(".chisel/index.db"));
+    }
+
+    #[test]
+    fn test_format_context_xml() {
+        let items = vec![
+            ContextItem {
+                path: "path/to/doc.md".to_string(),
+                content: "# Title\nContent".to_string(),
+                r#type: "document".to_string(),
+            },
+            ContextItem {
+                path: "path/to/issue.md".to_string(),
+                content: "Issue content".to_string(),
+                r#type: "issue".to_string(),
+            },
+        ];
+
+        let output = format_context_xml(items);
+
+        assert!(output.contains("<context>"));
+        assert!(output.contains("<file path=\"path/to/doc.md\">"));
+        assert!(output.contains("# Title\nContent"));
+        assert!(output.contains("</file>"));
+        assert!(output.contains("<issue path=\"path/to/issue.md\">"));
+        assert!(output.contains("Issue content"));
+        assert!(output.contains("</issue>"));
+        assert!(output.contains("</context>"));
     }
 }

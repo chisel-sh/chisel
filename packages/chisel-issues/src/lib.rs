@@ -1,20 +1,20 @@
-use serde::{Serialize, Deserialize};
-use anyhow::{Result, Context};
-use std::path::PathBuf;
-use std::fs;
-use std::str::FromStr;
-use chrono::{DateTime, Utc};
-use chisel_store::{Store, IssueRow};
+use anyhow::{Context, Result};
 use chisel_fs::spawn_editor;
 use chisel_render::Renderable;
+use chisel_store::{IssueRow, Store};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
+use std::str::FromStr;
 use strum_macros::{Display, EnumString};
 
-pub mod source;
-pub mod parsing;
 pub mod default_source;
+pub mod parsing;
+pub mod source;
 
-use source::IssueSource;
 use default_source::DefaultIssueSource;
+use source::IssueSource;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Issue {
@@ -33,7 +33,9 @@ pub struct Issue {
 
 impl chisel_render::MachineOutput for Issue {}
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Display, EnumString)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Display, EnumString,
+)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum IssueStatus {
@@ -44,7 +46,9 @@ pub enum IssueStatus {
     Cancelled,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Display, EnumString)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Display, EnumString,
+)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum IssuePriority {
@@ -95,11 +99,14 @@ impl IssueList {
         issues.sort_by(|a, b| {
             let a_status = IssueStatus::from_str(&a.status).unwrap_or(IssueStatus::Todo);
             let b_status = IssueStatus::from_str(&b.status).unwrap_or(IssueStatus::Todo);
-            
-            a_status.cmp(&b_status)
+
+            a_status
+                .cmp(&b_status)
                 .then_with(|| {
-                    let a_prio = IssuePriority::from_str(&a.priority).unwrap_or(IssuePriority::Medium);
-                    let b_prio = IssuePriority::from_str(&b.priority).unwrap_or(IssuePriority::Medium);
+                    let a_prio =
+                        IssuePriority::from_str(&a.priority).unwrap_or(IssuePriority::Medium);
+                    let b_prio =
+                        IssuePriority::from_str(&b.priority).unwrap_or(IssuePriority::Medium);
                     b_prio.cmp(&a_prio) // Higher priority first
                 })
                 .then_with(|| b.id.cmp(&a.id))
@@ -145,22 +152,28 @@ mod tests {
     async fn test_issues_service_flow() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().to_path_buf();
-        
+
         let service = IssuesService::new(root.clone()).await.unwrap();
         service.init().await.unwrap();
-        
+
         let list = service.list(None).await.unwrap();
         assert_eq!(list.0.len(), 2);
-        
+
         // Create
-        let issue = service.create("Bug", IssuePriority::High, vec![], "Fix it").await.unwrap();
+        let issue = service
+            .create("Bug", IssuePriority::High, vec![], "Fix it")
+            .await
+            .unwrap();
         assert_eq!(issue.id, 3);
-        
+
         // Update Status
-        service.update_status(3, IssueStatus::InProgress).await.unwrap();
+        service
+            .update_status(3, IssueStatus::InProgress)
+            .await
+            .unwrap();
         let updated = service.show(3).await.unwrap();
         assert_eq!(updated.status, IssueStatus::InProgress);
-        
+
         // Delete
         service.delete(3).await.unwrap();
         assert!(service.show(3).await.is_err());
@@ -182,7 +195,6 @@ mod tests {
     }
 }
 
-
 impl Renderable for IssueList {
     fn render_human(&self) -> Result<()> {
         if self.0.is_empty() {
@@ -193,13 +205,20 @@ impl Renderable for IssueList {
         let mut sorted = self.0.clone();
         IssueList::sort_issues(&mut sorted);
 
-        println!("{:<6} {:<35} {:<12} {:<10}", "ID", "TITLE", "STATUS", "PRIORITY");
+        println!(
+            "{:<6} {:<35} {:<12} {:<10}",
+            "ID", "TITLE", "STATUS", "PRIORITY"
+        );
         println!("{}", "-".repeat(68));
         for issue in sorted {
             println!(
                 "{:<6} {:<35} {:<12} {:<10}",
                 format!("#{}", issue.id),
-                if issue.title.len() > 33 { format!("{}...", &issue.title[..30]) } else { issue.title.clone() },
+                if issue.title.len() > 33 {
+                    format!("{}...", &issue.title[..30])
+                } else {
+                    issue.title.clone()
+                },
                 issue.status,
                 issue.priority,
             );
@@ -207,7 +226,6 @@ impl Renderable for IssueList {
         Ok(())
     }
 }
-
 
 pub struct IssuesService {
     pub store: Option<Store>,
@@ -219,7 +237,11 @@ impl IssuesService {
     pub async fn new(root: PathBuf) -> Result<Self> {
         let store = Store::new(root.clone()).await?;
         let source = Box::new(DefaultIssueSource::new(root.clone()));
-        Ok(Self { store: Some(store), root, source })
+        Ok(Self {
+            store: Some(store),
+            root,
+            source,
+        })
     }
 
     pub async fn list(&self, status: Option<IssueStatus>) -> Result<IssueList> {
@@ -227,19 +249,30 @@ impl IssuesService {
         // For performance, we might want to use the store if available
         // but for trait purity we use source for now.
         // Actually, store is useful for fast queries in TUI.
-        let rows = issues.into_iter().map(|i| IssueRow {
-            id: i.id,
-            path: i.path.to_string_lossy().to_string(),
-            title: i.title,
-            status: i.status.to_string(),
-            priority: i.priority.to_string(),
-            labels: if i.labels.is_empty() { None } else { Some(i.labels.join(",")) },
-            order: i.order,
-            excerpt: if i.content.len() > 100 { format!("{}...", &i.content[..97]) } else { i.content.clone() },
-            created_at: i.created_at,
-            updated_at: i.updated_at,
-        }).collect();
-        
+        let rows = issues
+            .into_iter()
+            .map(|i| IssueRow {
+                id: i.id,
+                path: i.path.to_string_lossy().to_string(),
+                title: i.title,
+                status: i.status.to_string(),
+                priority: i.priority.to_string(),
+                labels: if i.labels.is_empty() {
+                    None
+                } else {
+                    Some(i.labels.join(","))
+                },
+                order: i.order,
+                excerpt: if i.content.len() > 100 {
+                    format!("{}...", &i.content[..97])
+                } else {
+                    i.content.clone()
+                },
+                created_at: i.created_at,
+                updated_at: i.updated_at,
+            })
+            .collect();
+
         let mut list = IssueList(rows);
         IssueList::sort_issues(&mut list.0);
         Ok(list)
@@ -291,7 +324,7 @@ impl IssuesService {
         fs::write(&temp_path, &issue.content)?;
 
         spawn_editor(&temp_path)?;
-        
+
         let new_content = fs::read_to_string(&temp_path)?;
         issue.content = new_content.trim().to_string();
         let _ = fs::remove_file(&temp_path);
@@ -345,23 +378,25 @@ impl IssuesService {
 
     pub async fn index_issue(&self, issue: &Issue) -> Result<()> {
         if let Some(store) = &self.store {
-            let labels = if issue.labels.is_empty() { 
-                None 
-            } else { 
-                Some(issue.labels.join(",")) 
+            let labels = if issue.labels.is_empty() {
+                None
+            } else {
+                Some(issue.labels.join(","))
             };
 
-            store.update_issue(chisel_store::UpdateIssueParams {
-                id: issue.id,
-                path: &issue.path.to_string_lossy(),
-                title: &issue.title,
-                status: &issue.status.to_string(),
-                priority: &issue.priority.to_string(),
-                labels: labels.as_deref(),
-                content: &issue.content,
-                order: issue.order,
-                created_at: issue.created_at,
-            }).await?;
+            store
+                .update_issue(chisel_store::UpdateIssueParams {
+                    id: issue.id,
+                    path: &issue.path.to_string_lossy(),
+                    title: &issue.title,
+                    status: &issue.status.to_string(),
+                    priority: &issue.priority.to_string(),
+                    labels: labels.as_deref(),
+                    content: &issue.content,
+                    order: issue.order,
+                    created_at: issue.created_at,
+                })
+                .await?;
         }
         Ok(())
     }
