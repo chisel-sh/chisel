@@ -1,19 +1,19 @@
-use serde::{Serialize, Deserialize};
 use anyhow::{Context, Result};
-use std::path::{PathBuf, Path};
-use std::fs;
-use chrono::{DateTime, Utc};
-use chisel_store::{Store, SearchResult};
-use chisel_fs::{slugify_title, spawn_editor, config::ChiselConfig};
+use chisel_fs::{config::ChiselConfig, slugify_title, spawn_editor};
 use chisel_render::Renderable;
+use chisel_store::{SearchResult, Store};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::{Path, PathBuf};
 
-pub mod source;
-pub mod parsing;
 pub mod default_source;
+pub mod parsing;
+pub mod source;
 pub mod starlight_source;
 
-use source::DataSource;
 use default_source::DefaultSource;
+use source::DataSource;
 use starlight_source::StarlightSource;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -63,7 +63,10 @@ impl Renderable for DocList {
         for doc in sorted {
             if doc.category != current_cat {
                 current_cat = doc.category.clone();
-                println!("\n[{}]", current_cat.as_deref().unwrap_or("GENERAL").to_uppercase());
+                println!(
+                    "\n[{}]",
+                    current_cat.as_deref().unwrap_or("GENERAL").to_uppercase()
+                );
             }
             println!("  - {} ({})", doc.name, doc.path.display());
         }
@@ -74,8 +77,16 @@ impl Renderable for DocList {
 impl DocList {
     pub fn sort_docs(docs: &mut [Doc]) {
         docs.sort_by(|a, b| {
-            let a_order = a.frontmatter.as_ref().and_then(|f| f.order).unwrap_or(i32::MAX);
-            let b_order = b.frontmatter.as_ref().and_then(|f| f.order).unwrap_or(i32::MAX);
+            let a_order = a
+                .frontmatter
+                .as_ref()
+                .and_then(|f| f.order)
+                .unwrap_or(i32::MAX);
+            let b_order = b
+                .frontmatter
+                .as_ref()
+                .and_then(|f| f.order)
+                .unwrap_or(i32::MAX);
             a_order.cmp(&b_order).then_with(|| a.name.cmp(&b.name))
         });
     }
@@ -94,7 +105,11 @@ mod tests {
                 category: None,
                 updated_at: Utc::now(),
                 content: None,
-                frontmatter: Some(DocFrontmatter { title: "Z".to_string(), order: Some(10), ..Default::default() }),
+                frontmatter: Some(DocFrontmatter {
+                    title: "Z".to_string(),
+                    order: Some(10),
+                    ..Default::default()
+                }),
                 sections: vec![],
             },
             Doc {
@@ -103,7 +118,11 @@ mod tests {
                 category: None,
                 updated_at: Utc::now(),
                 content: None,
-                frontmatter: Some(DocFrontmatter { title: "A".to_string(), order: Some(1), ..Default::default() }),
+                frontmatter: Some(DocFrontmatter {
+                    title: "A".to_string(),
+                    order: Some(1),
+                    ..Default::default()
+                }),
                 sections: vec![],
             },
             Doc {
@@ -112,7 +131,11 @@ mod tests {
                 category: None,
                 updated_at: Utc::now(),
                 content: None,
-                frontmatter: Some(DocFrontmatter { title: "B".to_string(), order: Some(1), ..Default::default() }),
+                frontmatter: Some(DocFrontmatter {
+                    title: "B".to_string(),
+                    order: Some(1),
+                    ..Default::default()
+                }),
                 sections: vec![],
             },
         ];
@@ -128,28 +151,28 @@ mod tests {
     async fn test_docs_service_flow() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().to_path_buf();
-        
+
         // Initialize service
         let service = DocsService::new(root.clone()).await.unwrap();
         service.init("Test Project").await.unwrap();
-        
+
         // Check initial seed docs
         let docs = service.list(ListOptions::default()).await.unwrap();
         assert!(docs.0.len() >= 2);
-        
+
         // Create new doc
-        let new_doc = service.create("My New Doc", Some("ideas".to_string())).await.unwrap();
+        let new_doc = service
+            .create("My New Doc", Some("ideas".to_string()))
+            .await
+            .unwrap();
         assert_eq!(new_doc.name, "my-new-doc.md");
         assert!(root.join(".chisel/docs/ideas/my-new-doc.md").exists());
-        
+
         // Re-list and verify
         let docs = service.list(ListOptions::default()).await.unwrap();
         assert!(docs.0.iter().any(|d| d.name == "my-new-doc.md"));
     }
 }
-
-
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WorkspaceOverview {
@@ -164,8 +187,11 @@ impl chisel_render::MachineOutput for WorkspaceOverview {}
 impl Renderable for WorkspaceOverview {
     fn render_human(&self) -> Result<()> {
         println!("WORKSPACE: {}", self.root.display());
-        println!("STATS: {} docs in {} categories", self.stats.total_documents, self.stats.categories);
-        
+        println!(
+            "STATS: {} docs in {} categories",
+            self.stats.total_documents, self.stats.categories
+        );
+
         println!("\nTOPOLOGY:");
         for cat in &self.topology {
             println!("  {:<20} {}", cat.category, cat.count);
@@ -173,7 +199,11 @@ impl Renderable for WorkspaceOverview {
 
         println!("\nRECENT CHANGES:");
         for doc in &self.recent_changes {
-            println!("  {:<30} {}", doc.name, doc.updated_at.format("%Y-%m-%d %H:%M"));
+            println!(
+                "  {:<30} {}",
+                doc.name,
+                doc.updated_at.format("%Y-%m-%d %H:%M")
+            );
         }
         Ok(())
     }
@@ -255,8 +285,10 @@ impl DocsService {
     pub async fn new(root: PathBuf) -> Result<Self> {
         let store = Store::new(root.clone()).await?;
         let config = ChiselConfig::load(&root).unwrap_or_default();
-        
-        let starlight_path = config.docs.as_ref()
+
+        let starlight_path = config
+            .docs
+            .as_ref()
             .and_then(|d| d.source.clone())
             .map(|s| root.join(s))
             .filter(|p| p.exists())
@@ -269,10 +301,10 @@ impl DocsService {
             Box::new(DefaultSource::new(chisel_docs))
         };
 
-        Ok(Self { 
-            store: Some(store), 
+        Ok(Self {
+            store: Some(store),
             workspace_root: root,
-            source
+            source,
         })
     }
 
@@ -293,20 +325,22 @@ impl DocsService {
 
     pub async fn overview(&self) -> Result<WorkspaceOverview> {
         let docs: Vec<Doc> = self.source.list().await?;
-        
+
         let mut cat_counts = std::collections::BTreeMap::new();
         for doc in &docs {
             let cat = doc.category.as_deref().unwrap_or("GENERAL").to_string();
             *cat_counts.entry(cat).or_insert(0) += 1;
         }
 
-        let topology: Vec<CategorySummary> = cat_counts.into_iter()
+        let topology: Vec<CategorySummary> = cat_counts
+            .into_iter()
             .map(|(category, count)| CategorySummary { category, count })
             .collect();
 
         let mut recent = docs.clone();
         recent.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
-        let recent_changes = recent.into_iter()
+        let recent_changes = recent
+            .into_iter()
             .take(5)
             .map(|d| DocSummary {
                 name: d.name,
@@ -329,20 +363,20 @@ impl DocsService {
     pub async fn create(&self, title: &str, category: Option<String>) -> Result<Doc> {
         let slug = slugify_title(title);
         let path = self.source.resolve_path(category.clone(), slug);
-        
+
         let fm = DocFrontmatter {
             title: title.to_string(),
             created_at: Utc::now(),
             tags: Vec::new(),
             order: None,
         };
-        
+
         let content = format!(
             "---\n{}---\n\n# {}\n\nStart writing here...",
             serde_yaml::to_string(&fm)?,
             title
         );
-        
+
         let doc = Doc {
             name: path.file_name().unwrap().to_string_lossy().to_string(),
             path: path.clone(),
@@ -350,11 +384,11 @@ impl DocsService {
             content: Some(content),
             frontmatter: Some(fm),
             sections: vec![],
-            category, 
+            category,
         };
-        
+
         self.save_and_sync(&doc).await?;
-        
+
         Ok(doc)
     }
 
@@ -366,19 +400,21 @@ impl DocsService {
 
     async fn index_doc_internal(&self, doc: &Doc) -> Result<()> {
         if let Some(store) = &self.store {
-             if let Some(content) = &doc.content {
+            if let Some(content) = &doc.content {
                 let tags = doc.frontmatter.as_ref().map(|f| f.tags.join(", "));
                 let title = doc.frontmatter.as_ref().map(|f| f.title.as_str());
                 let created_at = doc.frontmatter.as_ref().map(|f| f.created_at);
 
-                store.update_doc(
-                    &doc.path.to_string_lossy(),
-                    &doc.name,
-                    title,
-                    tags.as_deref(),
-                    content,
-                    created_at,
-                ).await?;
+                store
+                    .update_doc(
+                        &doc.path.to_string_lossy(),
+                        &doc.name,
+                        title,
+                        tags.as_deref(),
+                        content,
+                        created_at,
+                    )
+                    .await?;
             }
         }
         Ok(())
@@ -387,42 +423,47 @@ impl DocsService {
     pub async fn edit(&self, path: PathBuf) -> Result<Doc> {
         let doc = self.source.load(path).await?;
         spawn_editor(&doc.path)?;
-        
+
         let updated = self.source.load(doc.path.clone()).await?;
         self.save_and_sync(&updated).await?;
-        
+
         Ok(updated)
     }
 
     pub async fn move_doc(&self, path: PathBuf, new_category: Option<String>) -> Result<Doc> {
         let mut doc = self.source.load(path).await?;
         let old_path = doc.path.clone();
-        
-        let slug = doc.path.file_stem().context("Invalid path")?.to_string_lossy().into_owned();
+
+        let slug = doc
+            .path
+            .file_stem()
+            .context("Invalid path")?
+            .to_string_lossy()
+            .into_owned();
         let new_path = self.source.resolve_path(new_category.clone(), slug);
-        
+
         doc.path = new_path;
         doc.category = new_category;
-        
+
         // Move is a bit special as it involves delete
         self.source.save(&doc).await?;
         self.source.delete(old_path).await?;
-        
+
         self.index_doc_internal(&doc).await?;
         self.rebuild_index().await?;
-        
+
         Ok(doc)
     }
 
     pub async fn update_doc_order(&self, path: PathBuf, order: i32) -> Result<Doc> {
         let mut doc = self.source.load(path).await?;
-        
+
         let mut fm = doc.frontmatter.clone().unwrap_or_default();
         fm.order = Some(order);
         doc.frontmatter = Some(fm);
 
         self.save_and_sync(&doc).await?;
-        
+
         Ok(doc)
     }
 
@@ -430,10 +471,10 @@ impl DocsService {
         if category == "[ALL]" || category == "GENERAL" {
             return Ok(());
         }
-        
+
         let mut meta = get_category_metadata(&self.source.root(), category);
         meta.order = Some(order);
-        
+
         let path = self.source.root().join(category).join("_category.yaml");
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
@@ -466,27 +507,41 @@ impl DocsService {
 
     pub async fn rebuild_index(&self) -> Result<()> {
         let mut docs = self.source.list().await?;
-        
+
         let mut categories_meta = std::collections::HashMap::new();
         for doc in &docs {
             let cat_id = doc.category.as_deref().unwrap_or("GENERAL");
             if !categories_meta.contains_key(cat_id) {
-                categories_meta.insert(cat_id.to_string(), get_category_metadata(&self.source.root(), cat_id));
+                categories_meta.insert(
+                    cat_id.to_string(),
+                    get_category_metadata(&self.source.root(), cat_id),
+                );
             }
         }
 
         docs.sort_by(|a, b| {
             let a_cat_id = a.category.as_deref().unwrap_or("GENERAL");
             let b_cat_id = b.category.as_deref().unwrap_or("GENERAL");
-            
+
             if a_cat_id == b_cat_id {
-                let a_order = a.frontmatter.as_ref().and_then(|f| f.order).unwrap_or(i32::MAX);
-                let b_order = b.frontmatter.as_ref().and_then(|f| f.order).unwrap_or(i32::MAX);
+                let a_order = a
+                    .frontmatter
+                    .as_ref()
+                    .and_then(|f| f.order)
+                    .unwrap_or(i32::MAX);
+                let b_order = b
+                    .frontmatter
+                    .as_ref()
+                    .and_then(|f| f.order)
+                    .unwrap_or(i32::MAX);
                 a_order.cmp(&b_order).then_with(|| a.name.cmp(&b.name))
             } else {
                 let a_meta = &categories_meta[a_cat_id];
                 let b_meta = &categories_meta[b_cat_id];
-                a_meta.order.unwrap_or(i32::MAX).cmp(&b_meta.order.unwrap_or(i32::MAX))
+                a_meta
+                    .order
+                    .unwrap_or(i32::MAX)
+                    .cmp(&b_meta.order.unwrap_or(i32::MAX))
                     .then_with(|| a_cat_id.cmp(b_cat_id))
             }
         });
@@ -502,7 +557,10 @@ impl DocsService {
                 index_content.push_str(&format!("\n### {}\n", cat_label.to_uppercase()));
             }
 
-            let name = doc.path.file_stem().map_or("Unknown", |s| s.to_str().unwrap_or(""));
+            let name = doc
+                .path
+                .file_stem()
+                .map_or("Unknown", |s| s.to_str().unwrap_or(""));
             let link = self.source.index_link(&doc);
             index_content.push_str(&format!("- [{}]({})\n", name, link));
         }
@@ -515,14 +573,15 @@ impl DocsService {
         if index_path.exists() {
             if let Ok(content) = fs::read_to_string(&index_path) {
                 if content.contains("Automatically managed by Chisel.") {
-                     fs::write(&index_path, user_index_content)?;
+                    fs::write(&index_path, user_index_content)?;
                 }
             }
         } else {
-             fs::write(&index_path, user_index_content)?;
+            fs::write(&index_path, user_index_content)?;
         }
 
-        let mut final_content = String::from("---\ntitle: Table of Contents\n---\n\n# Table of Contents\n\n");
+        let mut final_content =
+            String::from("---\ntitle: Table of Contents\n---\n\n# Table of Contents\n\n");
         final_content.push_str("Automatically managed by Chisel.\n\n");
         final_content.push_str(&index_content);
 
@@ -532,16 +591,18 @@ impl DocsService {
 
     pub async fn init(&self, _project_name: &str) -> Result<()> {
         // 1. Welcome
-        let welcome_path = self.source.resolve_path(None, "welcome-to-chisel".to_string());
+        let welcome_path = self
+            .source
+            .resolve_path(None, "welcome-to-chisel".to_string());
         if !welcome_path.exists() {
-             let fm = DocFrontmatter {
+            let fm = DocFrontmatter {
                 title: "Welcome to Chisel".to_string(),
                 created_at: Utc::now(),
                 tags: vec!["chisel".to_string(), "onboarding".to_string()],
                 order: None,
             };
             let content = "Chisel is a text-first toolkit for shaping information. Everything you see here is stored as plain Markdown files in your project.\n\n### Quick Start\n- Use **Docs** to manage your project's knowledge base.\n- Use **Issues** to track tasks in a local Kanban board.\n\n### Navigation\n- `Tab`: Switch between Category, Document, and Preview panes.\n- `j`/`k`: Move selection up and down.\n- `q`: Exit the TUI and return to your shell.";
-            
+
             let doc = Doc {
                 name: "welcome-to-chisel.md".to_string(),
                 path: welcome_path,
@@ -556,16 +617,18 @@ impl DocsService {
 
         // 2. Chisel Docs Tutorial
         let tutorial_dir = "tutorial".to_string();
-        let working_path = self.source.resolve_path(Some(tutorial_dir.clone()), "working-with-docs".to_string());
+        let working_path = self
+            .source
+            .resolve_path(Some(tutorial_dir.clone()), "working-with-docs".to_string());
         if !working_path.exists() {
-             let fm = DocFrontmatter {
+            let fm = DocFrontmatter {
                 title: "Working with Docs".to_string(),
                 created_at: Utc::now(),
                 tags: vec!["tutorial".to_string(), "docs".to_string()],
                 order: None,
             };
             let content = "Docs are stored in `.chisel/docs/`. You can organize them into categories by creating subdirectories.\n\n### Key Actions\n- `n`: Create a new document.\n- `e`: Edit the selected document in your `$EDITOR`.\n- `m`: Move a document to a different category.\n- `/`: Search all documents (uses local SQLite index).";
-            
+
             let doc = Doc {
                 name: "working-with-docs.md".to_string(),
                 path: working_path,
@@ -589,19 +652,21 @@ pub async fn index_docs(root: PathBuf, store: &Store) -> Result<()> {
     let docs = source.list().await?;
     for doc in docs {
         if let Ok(full_doc) = source.load(doc.path).await {
-             if let Some(content) = &full_doc.content {
+            if let Some(content) = &full_doc.content {
                 let tags = full_doc.frontmatter.as_ref().map(|f| f.tags.join(", "));
                 let title = full_doc.frontmatter.as_ref().map(|f| f.title.as_str());
                 let created_at = full_doc.frontmatter.as_ref().map(|f| f.created_at);
 
-                store.update_doc(
-                    &full_doc.path.to_string_lossy(),
-                    &full_doc.name,
-                    title,
-                    tags.as_deref(),
-                    content,
-                    created_at,
-                ).await?;
+                store
+                    .update_doc(
+                        &full_doc.path.to_string_lossy(),
+                        &full_doc.name,
+                        title,
+                        tags.as_deref(),
+                        content,
+                        created_at,
+                    )
+                    .await?;
             }
         }
     }
@@ -614,7 +679,10 @@ pub async fn search_docs(query: &str, store: &Store) -> Result<Vec<SearchResult>
 
 pub fn get_category_metadata(docs_root: &Path, category: &str) -> CategoryMetadata {
     if category == "[ALL]" {
-        return CategoryMetadata { label: Some("[ALL]".to_string()), order: Some(-1) };
+        return CategoryMetadata {
+            label: Some("[ALL]".to_string()),
+            order: Some(-1),
+        };
     }
     let path = docs_root.join(category).join("_category.yaml");
     if path.exists() {

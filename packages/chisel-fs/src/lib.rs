@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use slug::slugify;
 use std::env;
-use std::process::Command;
 use std::path::Path;
+use std::process::Command;
 
 pub mod config;
 
@@ -35,13 +35,16 @@ pub fn move_file(old_path: &Path, new_path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::fs;
+    use tempfile::tempdir;
 
     #[test]
     fn test_slugify_title() {
         assert_eq!(slugify_title("Hello World"), "hello-world");
-        assert_eq!(slugify_title("Hello! World? (Part 1)"), "hello-world-part-1");
+        assert_eq!(
+            slugify_title("Hello! World? (Part 1)"),
+            "hello-world-part-1"
+        );
         assert_eq!(slugify_title("Rust & Go"), "rust-go");
     }
 
@@ -50,10 +53,10 @@ mod tests {
         let dir = tempdir().unwrap();
         let old_path = dir.path().join("old.txt");
         let new_path = dir.path().join("new.txt");
-        
+
         fs::write(&old_path, "test").unwrap();
         move_file(&old_path, &new_path).unwrap();
-        
+
         assert!(!old_path.exists());
         assert!(new_path.exists());
         assert_eq!(fs::read_to_string(&new_path).unwrap(), "test");

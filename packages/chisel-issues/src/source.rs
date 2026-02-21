@@ -1,7 +1,7 @@
-use async_trait::async_trait;
-use anyhow::Result;
-use std::path::PathBuf;
 use crate::{Issue, IssueStatus};
+use anyhow::Result;
+use async_trait::async_trait;
+use std::path::PathBuf;
 
 #[async_trait]
 pub trait IssueSource: Send + Sync {

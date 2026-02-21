@@ -1,6 +1,6 @@
-use serde::Serialize;
 use anyhow::Result;
 pub use ratatui::style::Color;
+use serde::Serialize;
 
 pub trait MachineOutput: Serialize {
     fn to_machine_string(&self) -> Result<String> {

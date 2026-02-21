@@ -1,8 +1,8 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, Duration};
 use std::path::PathBuf;
 use std::process::Command;
+use std::time::{Duration, SystemTime};
 
 const REPO: &str = "chisel-sh/chisel";
 const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 60 * 60); // 24 hours
@@ -23,7 +23,9 @@ impl UpgradeService {
     }
 
     fn check_file_path(&self) -> PathBuf {
-        self.workspace_root.join(".chisel").join("update_check.json")
+        self.workspace_root
+            .join(".chisel")
+            .join("update_check.json")
     }
 
     pub async fn check_for_updates(&self) -> Result<Option<String>> {
@@ -78,9 +80,12 @@ impl UpgradeService {
         let tag = json["tag_name"]
             .as_str()
             .context("Invalid tag_name in GitHub response")?;
-        
+
         // Remove 'chisel-v' or 'v' prefix if present
-        Ok(tag.trim_start_matches("chisel-v").trim_start_matches('v').to_string())
+        Ok(tag
+            .trim_start_matches("chisel-v")
+            .trim_start_matches('v')
+            .to_string())
     }
 
     fn is_newer(&self, latest: &str, current: &str) -> bool {
@@ -89,15 +94,19 @@ impl UpgradeService {
         let current_parts: Vec<u32> = current.split('.').filter_map(|s| s.parse().ok()).collect();
 
         for (l, c) in latest_parts.iter().zip(current_parts.iter()) {
-            if l > c { return true; }
-            if l < c { return false; }
+            if l > c {
+                return true;
+            }
+            if l < c {
+                return false;
+            }
         }
         latest_parts.len() > current_parts.len()
     }
 
     pub fn perform_update(&self) -> Result<()> {
         println!("🚀 Updating Chisel...");
-        
+
         let status = Command::new("sh")
             .arg("-c")
             .arg("curl -sL https://install.chisel.build | sh")

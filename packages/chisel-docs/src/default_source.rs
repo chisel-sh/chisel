@@ -1,10 +1,14 @@
-use async_trait::async_trait;
+use crate::{
+    parsing::{parse_frontmatter, parse_sections},
+    source::DataSource,
+    Doc,
+};
 use anyhow::Result;
-use std::path::{PathBuf, Path};
-use std::fs;
-use ignore::WalkBuilder;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use crate::{Doc, parsing::{parse_frontmatter, parse_sections}, source::DataSource};
+use ignore::WalkBuilder;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 pub struct DefaultSource {
     pub root: PathBuf,
@@ -17,7 +21,8 @@ impl DefaultSource {
 
     fn resolve_category(&self, path: &Path) -> Option<String> {
         if let Ok(rel) = path.strip_prefix(&self.root) {
-            return rel.parent()
+            return rel
+                .parent()
                 .filter(|p| !p.as_os_str().is_empty())
                 .map(|p| p.to_string_lossy().into_owned());
         }
@@ -35,10 +40,10 @@ impl DataSource for DefaultSource {
             .build();
 
         for entry in walker.filter_map(|e| e.ok()) {
-            if entry.file_type().is_some_and(|ft| ft.is_file()) 
-               && entry.path().extension().is_some_and(|ext| ext == "md") 
-               && entry.file_name() != "INDEX.md"
-               && !entry.file_name().to_string_lossy().starts_with("_")
+            if entry.file_type().is_some_and(|ft| ft.is_file())
+                && entry.path().extension().is_some_and(|ext| ext == "md")
+                && entry.file_name() != "INDEX.md"
+                && !entry.file_name().to_string_lossy().starts_with("_")
             {
                 let path = entry.path().to_path_buf();
                 let doc = self.load(path).await?;
@@ -52,13 +57,15 @@ impl DataSource for DefaultSource {
         let metadata = fs::metadata(&path)?;
         let updated_at: DateTime<Utc> = metadata.modified()?.into();
         let raw_content = fs::read_to_string(&path)?;
-        
+
         let (frontmatter, content) = parse_frontmatter(&raw_content);
         let sections = parse_sections(&content);
         let category = self.resolve_category(&path);
 
         Ok(Doc {
-            name: path.file_name().map_or(String::new(), |n| n.to_string_lossy().into_owned()),
+            name: path
+                .file_name()
+                .map_or(String::new(), |n| n.to_string_lossy().into_owned()),
             path,
             updated_at,
             content: Some(content),
@@ -71,12 +78,16 @@ impl DataSource for DefaultSource {
     async fn save(&self, doc: &Doc) -> Result<()> {
         let mut content = String::new();
         if let Some(fm) = &doc.frontmatter {
-            content.push_str("---
-");
+            content.push_str(
+                "---
+",
+            );
             content.push_str(&serde_yaml::to_string(fm)?);
-            content.push_str("---
+            content.push_str(
+                "---
 
-");
+",
+            );
         }
         if let Some(body) = &doc.content {
             content.push_str(body);

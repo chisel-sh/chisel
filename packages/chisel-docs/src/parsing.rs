@@ -68,4 +68,3 @@ Some text
         assert_eq!(sections[3].level, 2);
     }
 }
-

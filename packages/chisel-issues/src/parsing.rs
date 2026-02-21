@@ -1,8 +1,8 @@
-use anyhow::{Context, Result};
-use std::path::{PathBuf};
-use std::fs;
-use chrono::{DateTime, Utc};
 use crate::{Issue, IssueFrontmatter};
+use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
+use std::fs;
+use std::path::PathBuf;
 
 pub fn load_issue_from_file(path: PathBuf) -> Result<Issue> {
     let raw = fs::read_to_string(&path)?;
@@ -15,14 +15,21 @@ pub fn load_issue_from_file(path: PathBuf) -> Result<Issue> {
 
     let parts: Vec<&str> = raw.splitn(3, "---").collect();
     if parts.len() != 3 {
-         anyhow::bail!("Invalid issue file format: {}", path.display());
+        anyhow::bail!("Invalid issue file format: {}", path.display());
     }
 
     let fm: IssueFrontmatter = serde_yaml::from_str(parts[1])?;
     let content = parts[2].trim().to_string();
 
-    let filename = path.file_name().and_then(|n| n.to_str()).context("Invalid filename")?;
-    let id = filename.split('_').next().context("Invalid issue ID in filename")?.parse::<i64>()?;
+    let filename = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .context("Invalid filename")?;
+    let id = filename
+        .split('_')
+        .next()
+        .context("Invalid issue ID in filename")?
+        .parse::<i64>()?;
 
     Ok(Issue {
         id,
