@@ -1196,21 +1196,18 @@ impl SpecsApp {
                                     self.prompt = AppPrompt::None;
 
                                     if !buffer.is_empty() {
-                                        match kind {
-                                            PromptKind::NewSpecTitle => {
-                                                let _ = self
-                                                    .service
-                                                    .create(
-                                                        &buffer,
-                                                        None,
-                                                        Some("feature"),
-                                                        None,
-                                                    )
-                                                    .await;
-                                                self.refresh_data().await?;
-                                                self.update_preview().await;
-                                            }
-                                            _ => {}
+                                        if let PromptKind::NewSpecTitle = kind {
+                                            let _ = self
+                                                .service
+                                                .create(
+                                                    &buffer,
+                                                    None,
+                                                    Some("feature"),
+                                                    None,
+                                                )
+                                                .await;
+                                            self.refresh_data().await?;
+                                            self.update_preview().await;
                                         }
                                     }
                                 }
