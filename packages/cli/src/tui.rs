@@ -1,8 +1,8 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use chisel_docs::{Doc, DocsService, ListOptions};
-use chisel_issues::{Issue, IssuePriority, IssueStatus, IssuesService};
 use chisel_render::colors::*;
-use chisel_store::IssueRow;
+use chisel_specs::{Spec, SpecStatus, SpecsService};
+use chisel_store::SpecRow;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -49,13 +49,9 @@ enum PromptKind {
     MoveDocCategory,
     ReorderDocOrder,
     ReorderCategoryOrder,
-    NewIssueTitle,
-    EditIssueTitle,
-    EditIssueLabels,
-    EditIssuePriority,
-    ChangeIssueStatus,
-    ConfirmDeleteIssue,
-    ReorderIssue,
+    NewSpecTitle,
+    ChangeSpecStatus,
+    ConfirmDeleteSpec,
 }
 
 fn preview_content_to_lines(content: &str) -> Vec<Line<'_>> {
@@ -953,51 +949,41 @@ impl DocsApp {
     }
 }
 
-// --- Issues Kanban App ---
+// --- Specs Explorer App ---
 
 #[derive(PartialEq, Debug, Clone, Copy)]
-pub enum IssuesPane {
-    Todo,
-    InProgress,
-    Done,
+pub enum SpecsPane {
+    List,
     Preview,
 }
 
-pub struct IssuesApp {
-    service: IssuesService,
-    all_issues: Vec<IssueRow>,
-    todo_list: Vec<IssueRow>,
-    todo_state: ListState,
-    inprogress_list: Vec<IssueRow>,
-    inprogress_state: ListState,
-    done_list: Vec<IssueRow>,
-    done_state: ListState,
-    selected_issue: Option<Issue>,
-    active_pane: IssuesPane,
+
+pub struct SpecsApp {
+    service: SpecsService,
+    all_specs: Vec<SpecRow>,
+    filtered_specs: Vec<SpecRow>,
+    list_state: ListState,
+    selected_spec: Option<Spec>,
+    active_pane: SpecsPane,
     preview_scroll: u16,
     prompt: AppPrompt,
     search: SearchState,
     exit_action: TuiAction,
-    status_filter: Option<IssueStatus>,
+    status_filter: Option<SpecStatus>,
 }
 
-impl IssuesApp {
+impl SpecsApp {
     pub async fn new(
-        service: IssuesService,
-        status_filter: Option<IssueStatus>,
-        initial_id: Option<i64>,
+        service: SpecsService,
+        status_filter: Option<SpecStatus>,
     ) -> Result<Self> {
         let mut app = Self {
             service,
-            all_issues: Vec::new(),
-            todo_list: Vec::new(),
-            todo_state: ListState::default(),
-            inprogress_list: Vec::new(),
-            inprogress_state: ListState::default(),
-            done_list: Vec::new(),
-            done_state: ListState::default(),
-            selected_issue: None,
-            active_pane: IssuesPane::Todo,
+            all_specs: Vec::new(),
+            filtered_specs: Vec::new(),
+            list_state: ListState::default(),
+            selected_spec: None,
+            active_pane: SpecsPane::List,
             preview_scroll: 0,
             prompt: AppPrompt::None,
             search: SearchState::default(),
@@ -1005,103 +991,51 @@ impl IssuesApp {
             status_filter,
         };
         app.refresh_data().await?;
-        app.todo_state.select(Some(0));
-
-        if let Some(id) = initial_id {
-            app.select_issue_by_id(id).await;
-        } else if let Some(status) = &app.status_filter {
-            app.active_pane = match status {
-                IssueStatus::Todo => IssuesPane::Todo,
-                IssueStatus::InProgress => IssuesPane::InProgress,
-                _ => IssuesPane::Done,
-            };
+        if !app.filtered_specs.is_empty() {
+            app.list_state.select(Some(0));
         }
-
         app.update_preview().await;
         Ok(app)
     }
 
-    async fn select_issue_by_id(&mut self, id: i64) {
-        if let Some(idx) = self.todo_list.iter().position(|i| i.id == id) {
-            self.todo_state.select(Some(idx));
-            self.active_pane = IssuesPane::Todo;
-        } else if let Some(idx) = self.inprogress_list.iter().position(|i| i.id == id) {
-            self.inprogress_state.select(Some(idx));
-            self.active_pane = IssuesPane::InProgress;
-        } else if let Some(idx) = self.done_list.iter().position(|i| i.id == id) {
-            self.done_state.select(Some(idx));
-            self.active_pane = IssuesPane::Done;
-        }
-    }
-
     async fn refresh_data(&mut self) -> Result<()> {
-        let store = self
-            .service
-            .store
-            .as_ref()
-            .context("Store not initialized")?;
-        let status_str = self.status_filter.as_ref().map(|s| s.to_string());
-        self.all_issues = store.get_issues(status_str.as_deref()).await?;
-        self.update_filtered_issues();
+        let list = self.service.list(self.status_filter.clone()).await?;
+        self.all_specs = list.0;
+        self.update_filtered_specs();
         Ok(())
     }
 
-    fn update_filtered_issues(&mut self) {
-        let mut filtered = self.all_issues.clone();
+    fn update_filtered_specs(&mut self) {
+        let mut filtered = self.all_specs.clone();
 
         if !self.search.buffer.is_empty() {
             let query = self.search.buffer.to_lowercase();
-            filtered.retain(|i| {
-                i.title.to_lowercase().contains(&query)
-                    || i.excerpt.to_lowercase().contains(&query)
-                    || i.labels
+            filtered.retain(|s| {
+                s.title.to_lowercase().contains(&query)
+                    || s.slug.to_lowercase().contains(&query)
+                    || s.area
                         .as_ref()
-                        .map(|l| l.to_lowercase().contains(&query))
+                        .map(|a| a.to_lowercase().contains(&query))
                         .unwrap_or(false)
+                    || s.excerpt.to_lowercase().contains(&query)
             });
         }
 
-        self.todo_list = filtered
-            .iter()
-            .filter(|i| i.status == "todo")
-            .cloned()
-            .collect();
-        self.inprogress_list = filtered
-            .iter()
-            .filter(|i| i.status == "in-progress")
-            .cloned()
-            .collect();
-        self.done_list = filtered
-            .iter()
-            .filter(|i| i.status == "done" || i.status == "closed" || i.status == "cancelled")
-            .cloned()
-            .collect();
+        self.filtered_specs = filtered;
     }
 
     async fn update_preview(&mut self) {
-        let id = match self.active_pane {
-            IssuesPane::Todo => self
-                .todo_state
-                .selected()
-                .and_then(|i| self.todo_list.get(i))
-                .map(|r| r.id),
-            IssuesPane::InProgress => self
-                .inprogress_state
-                .selected()
-                .and_then(|i| self.inprogress_list.get(i))
-                .map(|r| r.id),
-            IssuesPane::Done => self
-                .done_state
-                .selected()
-                .and_then(|i| self.done_list.get(i))
-                .map(|r| r.id),
-            IssuesPane::Preview => None,
-        };
+        let slug = self
+            .list_state
+            .selected()
+            .and_then(|i| self.filtered_specs.get(i))
+            .map(|r| r.slug.clone());
 
-        if let Some(id) = id {
-            self.selected_issue = self.service.show(id).await.ok();
-        } else if self.active_pane != IssuesPane::Preview {
-            self.selected_issue = None;
+        if let Some(slug) = slug {
+            self.selected_spec = self.service.show(&slug).await.ok();
+            self.preview_scroll = 0;
+        } else {
+            self.selected_spec = None;
         }
     }
 
@@ -1135,215 +1069,241 @@ impl IssuesApp {
             if event::poll(std::time::Duration::from_millis(100))? {
                 if let Event::Key(key) = event::read()? {
                     if self.search.handle_key(key) {
-                        self.update_filtered_issues();
+                        self.update_filtered_specs();
                         self.update_preview().await;
-                    } else if let AppPrompt::None = self.prompt {
-                        match key.code {
+                        continue;
+                    }
+
+                    match &self.prompt {
+                        AppPrompt::None => match key.code {
                             KeyCode::Char('q') | KeyCode::Esc => {
                                 self.exit_action = TuiAction::Quit;
                                 return Ok(());
                             }
-                            KeyCode::Tab | KeyCode::Right | KeyCode::Char('l') => {
+                            KeyCode::Tab => {
                                 self.active_pane = match self.active_pane {
-                                    IssuesPane::Todo => IssuesPane::InProgress,
-                                    IssuesPane::InProgress => IssuesPane::Done,
-                                    IssuesPane::Done => IssuesPane::Preview,
-                                    IssuesPane::Preview => IssuesPane::Todo,
+                                    SpecsPane::List => SpecsPane::Preview,
+                                    SpecsPane::Preview => SpecsPane::List,
                                 };
-                                self.update_preview().await;
                             }
-                            KeyCode::BackTab | KeyCode::Left | KeyCode::Char('h') => {
-                                self.active_pane = match self.active_pane {
-                                    IssuesPane::Todo => IssuesPane::Preview,
-                                    IssuesPane::InProgress => IssuesPane::Todo,
-                                    IssuesPane::Done => IssuesPane::InProgress,
-                                    IssuesPane::Preview => IssuesPane::Done,
-                                };
-                                self.update_preview().await;
-                            }
-                            KeyCode::Char('j') | KeyCode::Down => match self.active_pane {
-                                IssuesPane::Todo => {
-                                    next_list_item(&mut self.todo_state, self.todo_list.len());
-                                    self.update_preview().await;
-                                }
-                                IssuesPane::InProgress => {
+                            KeyCode::Char('j') | KeyCode::Down => {
+                                if self.active_pane == SpecsPane::List {
                                     next_list_item(
-                                        &mut self.inprogress_state,
-                                        self.inprogress_list.len(),
+                                        &mut self.list_state,
+                                        self.filtered_specs.len(),
                                     );
                                     self.update_preview().await;
+                                } else {
+                                    self.preview_scroll =
+                                        self.preview_scroll.saturating_add(3);
                                 }
-                                IssuesPane::Done => {
-                                    next_list_item(&mut self.done_state, self.done_list.len());
-                                    self.update_preview().await;
-                                }
-                                IssuesPane::Preview => {
-                                    self.preview_scroll = self.preview_scroll.saturating_add(1);
-                                }
-                            },
-                            KeyCode::Char('k') | KeyCode::Up => match self.active_pane {
-                                IssuesPane::Todo => {
-                                    prev_list_item(&mut self.todo_state, self.todo_list.len());
-                                    self.update_preview().await;
-                                }
-                                IssuesPane::InProgress => {
+                            }
+                            KeyCode::Char('k') | KeyCode::Up => {
+                                if self.active_pane == SpecsPane::List {
                                     prev_list_item(
-                                        &mut self.inprogress_state,
-                                        self.inprogress_list.len(),
+                                        &mut self.list_state,
+                                        self.filtered_specs.len(),
                                     );
                                     self.update_preview().await;
+                                } else {
+                                    self.preview_scroll =
+                                        self.preview_scroll.saturating_sub(3);
                                 }
-                                IssuesPane::Done => {
-                                    prev_list_item(&mut self.done_state, self.done_list.len());
-                                    self.update_preview().await;
+                            }
+                            KeyCode::Char('n') => {
+                                self.prompt = AppPrompt::Input {
+                                    label: "New Spec Title".to_string(),
+                                    buffer: String::new(),
+                                    kind: PromptKind::NewSpecTitle,
+                                };
+                            }
+                            KeyCode::Char('s') => {
+                                if self.selected_spec.is_some() {
+                                    self.prompt = AppPrompt::Select {
+                                        label: "Change Status".to_string(),
+                                        options: vec![
+                                            "draft".to_string(),
+                                            "ready".to_string(),
+                                            "in-progress".to_string(),
+                                            "shipped".to_string(),
+                                            "archived".to_string(),
+                                        ],
+                                        selected: 0,
+                                        kind: PromptKind::ChangeSpecStatus,
+                                    };
                                 }
-                                IssuesPane::Preview => {
-                                    self.preview_scroll = self.preview_scroll.saturating_sub(1);
-                                }
-                            },
+                            }
                             KeyCode::Char('e') => {
-                                if let Some(issue) = &self.selected_issue {
+                                if let Some(spec) = &self.selected_spec {
+                                    let slug = spec.slug.clone();
+                                    // Exit TUI, edit, re-enter
                                     disable_raw_mode()?;
                                     execute!(
                                         terminal.backend_mut(),
                                         LeaveAlternateScreen,
                                         DisableMouseCapture
                                     )?;
-                                    let _ = self.service.edit(issue.id).await;
+                                    terminal.show_cursor()?;
+
+                                    let _ = self.service.edit(&slug).await;
+
                                     enable_raw_mode()?;
                                     execute!(
-                                        terminal.backend_mut(),
+                                        io::stdout(),
                                         EnterAlternateScreen,
                                         EnableMouseCapture
                                     )?;
-                                    terminal.clear()?;
                                     self.refresh_data().await?;
                                     self.update_preview().await;
                                 }
                             }
-                            KeyCode::Char('t') => {
-                                if let Some(issue) = &self.selected_issue {
-                                    self.prompt = AppPrompt::Input {
-                                        label: "Edit Title: ".to_string(),
-                                        buffer: issue.title.clone(),
-                                        kind: PromptKind::EditIssueTitle,
-                                    };
-                                }
-                            }
-                            KeyCode::Char('L') => {
-                                if let Some(issue) = &self.selected_issue {
-                                    self.prompt = AppPrompt::Input {
-                                        label: "Labels (comma separated): ".to_string(),
-                                        buffer: issue.labels.join(", "),
-                                        kind: PromptKind::EditIssueLabels,
-                                    };
-                                }
-                            }
-                            KeyCode::Char('p') => {
-                                if self.selected_issue.is_some() {
+                            KeyCode::Char('x') => {
+                                if self.selected_spec.is_some() {
                                     self.prompt = AppPrompt::Select {
-                                        label: " Select Priority ".to_string(),
+                                        label: "Delete this spec?".to_string(),
                                         options: vec![
-                                            "Low".to_string(),
-                                            "Medium".to_string(),
-                                            "High".to_string(),
-                                            "Critical".to_string(),
-                                        ],
-                                        selected: 1,
-                                        kind: PromptKind::EditIssuePriority,
-                                    };
-                                }
-                            }
-                            KeyCode::Char('n') => {
-                                self.prompt = AppPrompt::Input {
-                                    label: "Issue Title: ".to_string(),
-                                    buffer: String::new(),
-                                    kind: PromptKind::NewIssueTitle,
-                                };
-                            }
-                            KeyCode::Char('m') => {
-                                if self.selected_issue.is_some() {
-                                    self.prompt = AppPrompt::Select {
-                                        label: " Select Status ".to_string(),
-                                        options: vec![
-                                            "Todo".to_string(),
-                                            "In Progress".to_string(),
-                                            "Done".to_string(),
-                                            "Closed".to_string(),
-                                            "Cancelled".to_string(),
+                                            "No".to_string(),
+                                            "Yes, delete".to_string(),
                                         ],
                                         selected: 0,
-                                        kind: PromptKind::ChangeIssueStatus,
-                                    };
-                                }
-                            }
-                            KeyCode::Char('[') | KeyCode::Char(']') => {
-                                if let Some(issue) = &self.selected_issue {
-                                    self.prompt = AppPrompt::Input {
-                                        label: format!("Order for #{}: ", issue.id),
-                                        buffer: issue.order.to_string(),
-                                        kind: PromptKind::ReorderIssue,
-                                    };
-                                }
-                            }
-                            KeyCode::Char('x') => {
-                                if let Some(issue) = &self.selected_issue {
-                                    self.prompt = AppPrompt::Input {
-                                        label: format!(" Delete issue #{}? (y/n) ", issue.id),
-                                        buffer: String::new(),
-                                        kind: PromptKind::ConfirmDeleteIssue,
+                                        kind: PromptKind::ConfirmDeleteSpec,
                                     };
                                 }
                             }
                             _ => {}
-                        }
-                    } else {
-                        // Handle Prompt Input
-                        match &mut self.prompt {
-                            AppPrompt::Input { buffer, kind, .. } => match key.code {
-                                KeyCode::Char(c) => buffer.push(c),
+                        },
+                        AppPrompt::Input { kind, .. } => {
+                            let kind = *kind;
+                            match key.code {
+                                KeyCode::Char(c) => {
+                                    if let AppPrompt::Input { buffer, .. } = &mut self.prompt {
+                                        buffer.push(c);
+                                    }
+                                }
                                 KeyCode::Backspace => {
-                                    buffer.pop();
+                                    if let AppPrompt::Input { buffer, .. } = &mut self.prompt {
+                                        buffer.pop();
+                                    }
+                                }
+                                KeyCode::Enter => {
+                                    let buffer = if let AppPrompt::Input { buffer, .. } =
+                                        &self.prompt
+                                    {
+                                        buffer.clone()
+                                    } else {
+                                        String::new()
+                                    };
+                                    self.prompt = AppPrompt::None;
+
+                                    if !buffer.is_empty() {
+                                        match kind {
+                                            PromptKind::NewSpecTitle => {
+                                                let _ = self
+                                                    .service
+                                                    .create(
+                                                        &buffer,
+                                                        None,
+                                                        Some("feature"),
+                                                        None,
+                                                    )
+                                                    .await;
+                                                self.refresh_data().await?;
+                                                self.update_preview().await;
+                                            }
+                                            _ => {}
+                                        }
+                                    }
                                 }
                                 KeyCode::Esc => {
                                     self.prompt = AppPrompt::None;
                                 }
-                                KeyCode::Enter => {
-                                    let input = buffer.clone();
-                                    let kind = *kind;
-                                    self.prompt = AppPrompt::None;
-                                    self.handle_prompt_confirm(input, kind).await?;
-                                }
                                 _ => {}
-                            },
-                            AppPrompt::Select {
-                                selected,
-                                options,
-                                kind,
-                                ..
-                            } => match key.code {
+                            }
+                        }
+                        AppPrompt::Select { options, kind, .. } => {
+                            let kind = *kind;
+                            let count = options.len();
+                            match key.code {
                                 KeyCode::Char('j') | KeyCode::Down => {
-                                    if *selected < options.len() - 1 {
-                                        *selected += 1;
+                                    if let AppPrompt::Select { selected, .. } = &mut self.prompt
+                                    {
+                                        *selected = (*selected + 1) % count;
                                     }
                                 }
                                 KeyCode::Char('k') | KeyCode::Up => {
-                                    if *selected > 0 {
-                                        *selected -= 1;
+                                    if let AppPrompt::Select { selected, .. } = &mut self.prompt
+                                    {
+                                        *selected = if *selected == 0 {
+                                            count - 1
+                                        } else {
+                                            *selected - 1
+                                        };
+                                    }
+                                }
+                                KeyCode::Enter => {
+                                    let selected = if let AppPrompt::Select {
+                                        selected,
+                                        options,
+                                        ..
+                                    } = &self.prompt
+                                    {
+                                        Some((*selected, options.clone()))
+                                    } else {
+                                        None
+                                    };
+                                    self.prompt = AppPrompt::None;
+
+                                    if let Some((idx, opts)) = selected {
+                                        match kind {
+                                            PromptKind::ChangeSpecStatus => {
+                                                if let Some(spec) = &self.selected_spec {
+                                                    let slug = spec.slug.clone();
+                                                    if let Ok(status) =
+                                                        std::str::FromStr::from_str(&opts[idx])
+                                                    {
+                                                        let _ = self
+                                                            .service
+                                                            .update_status(&slug, status)
+                                                            .await;
+                                                        self.refresh_data().await?;
+                                                        self.update_preview().await;
+                                                    }
+                                                }
+                                            }
+                                            PromptKind::ConfirmDeleteSpec => {
+                                                if idx == 1 {
+                                                    if let Some(spec) = &self.selected_spec {
+                                                        let slug = spec.slug.clone();
+                                                        let _ =
+                                                            self.service.delete(&slug).await;
+                                                        self.refresh_data().await?;
+                                                        // Fix selection after delete
+                                                        let len =
+                                                            self.filtered_specs.len();
+                                                        if len == 0 {
+                                                            self.list_state
+                                                                .select(None);
+                                                        } else if let Some(sel) =
+                                                            self.list_state.selected()
+                                                        {
+                                                            if sel >= len {
+                                                                self.list_state
+                                                                    .select(Some(len - 1));
+                                                            }
+                                                        }
+                                                        self.update_preview().await;
+                                                    }
+                                                }
+                                            }
+                                            _ => {}
+                                        }
                                     }
                                 }
                                 KeyCode::Esc => {
                                     self.prompt = AppPrompt::None;
                                 }
-                                KeyCode::Enter => {
-                                    let idx = *selected;
-                                    let kind = *kind;
-                                    self.prompt = AppPrompt::None;
-                                    self.handle_select_confirm(idx, kind).await?;
-                                }
                                 _ => {}
-                            },
-                            _ => {}
+                            }
                         }
                     }
                 }
@@ -1351,316 +1311,223 @@ impl IssuesApp {
         }
     }
 
-    async fn handle_prompt_confirm(&mut self, input: String, kind: PromptKind) -> Result<()> {
-        match kind {
-            PromptKind::NewIssueTitle => {
-                if !input.is_empty() {
-                    self.service
-                        .create(
-                            &input,
-                            IssuePriority::Medium,
-                            Vec::new(),
-                            "Enter description...",
-                        )
-                        .await?;
-                    self.refresh_data().await?;
-                    self.update_preview().await;
-                }
-            }
-            PromptKind::EditIssueTitle => {
-                if let Some(issue) = &self.selected_issue {
-                    if !input.is_empty() {
-                        self.service.update_title(issue.id, input).await?;
-                        self.refresh_data().await?;
-                        self.update_preview().await;
-                    }
-                }
-            }
-            PromptKind::EditIssueLabels => {
-                if let Some(issue) = &self.selected_issue {
-                    let labels = input
-                        .split(',')
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                    self.service.update_labels(issue.id, labels).await?;
-                    self.refresh_data().await?;
-                    self.update_preview().await;
-                }
-            }
-            PromptKind::ConfirmDeleteIssue => {
-                if input.to_lowercase() == "y" {
-                    if let Some(issue) = &self.selected_issue {
-                        self.service.delete(issue.id).await?;
-                        self.refresh_data().await?;
-                        self.update_preview().await;
-                    }
-                }
-            }
-            PromptKind::ReorderIssue => {
-                if let Ok(order) = input.parse::<i32>() {
-                    if let Some(issue) = &self.selected_issue {
-                        self.service.update_order(issue.id, order).await?;
-                        self.refresh_data().await?;
-                        self.update_preview().await;
-                    }
-                }
-            }
-            _ => {}
-        }
-        Ok(())
-    }
+    fn render(&self, f: &mut Frame) {
+        let size = f.area();
 
-    async fn handle_select_confirm(&mut self, idx: usize, kind: PromptKind) -> Result<()> {
-        match kind {
-            PromptKind::ChangeIssueStatus => {
-                if let Some(issue) = &self.selected_issue {
-                    let status = match idx {
-                        0 => IssueStatus::Todo,
-                        1 => IssueStatus::InProgress,
-                        2 => IssueStatus::Done,
-                        3 => IssueStatus::Closed,
-                        4 => IssueStatus::Cancelled,
-                        _ => IssueStatus::Todo,
-                    };
-                    self.service.update_status(issue.id, status).await?;
-                    self.refresh_data().await?;
-                    self.update_preview().await;
-                }
-            }
-            PromptKind::EditIssuePriority => {
-                if let Some(issue) = &self.selected_issue {
-                    let priority = match idx {
-                        0 => IssuePriority::Low,
-                        1 => IssuePriority::Medium,
-                        2 => IssuePriority::High,
-                        3 => IssuePriority::Critical,
-                        _ => IssuePriority::Medium,
-                    };
-                    self.service.update_priority(issue.id, priority).await?;
-                    self.refresh_data().await?;
-                    self.update_preview().await;
-                }
-            }
-            _ => {}
-        }
-        Ok(())
-    }
-
-    fn render(&mut self, f: &mut Frame) {
-        f.render_widget(Clear, f.area());
-
-        let chunks = Layout::default()
+        // Main layout: list (40%) | preview (60%)
+        let outer = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Min(0), Constraint::Length(1)])
-            .split(f.area());
-        let board_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
-            .split(chunks[0]);
-        let column_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(34),
-            ])
-            .split(board_chunks[0]);
+            .constraints([Constraint::Min(3), Constraint::Length(1)])
+            .split(size);
 
-        render_issue_column(
-            f,
-            column_chunks[0],
-            " TODO ",
-            &self.todo_list,
-            &mut self.todo_state,
-            self.active_pane == IssuesPane::Todo,
-        );
-        render_issue_column(
-            f,
-            column_chunks[1],
-            " IN PROGRESS ",
-            &self.inprogress_list,
-            &mut self.inprogress_state,
-            self.active_pane == IssuesPane::InProgress,
-        );
-        render_issue_column(
-            f,
-            column_chunks[2],
-            " DONE ",
-            &self.done_list,
-            &mut self.done_state,
-            self.active_pane == IssuesPane::Done,
-        );
+        let main_area = outer[0];
+        let footer_area = outer[1];
 
-        let preview_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Min(0), Constraint::Length(10)])
-            .split(board_chunks[1]);
-        let preview_border_style = if self.active_pane == IssuesPane::Preview {
-            Style::default().fg(ACCENT_BLUE)
-        } else {
-            Style::default().fg(Color::DarkGray)
+        let columns = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+            .split(main_area);
+
+        // --- Left: Spec List ---
+        let list_active = self.active_pane == SpecsPane::List;
+        let list_border_color = if list_active { ACCENT_BLUE } else { Color::DarkGray };
+
+        let title = match &self.status_filter {
+            Some(s) => format!(" Specs [{}] ", s),
+            None => " Specs ".to_string(),
         };
-        let content_text = self
-            .selected_issue
-            .as_ref()
-            .map(|i| i.content.as_str())
-            .unwrap_or("Select an issue to preview");
-        f.render_widget(
-            Paragraph::new(preview_content_to_lines(content_text))
+
+        let items: Vec<ListItem> = self
+            .filtered_specs
+            .iter()
+            .map(|s| {
+                let status_color = match s.status.as_str() {
+                    "draft" => TEXT_DIM,
+                    "ready" => ACCENT_BLUE,
+                    "in-progress" => ACCENT_YELLOW,
+                    "shipped" => ACCENT_GREEN,
+                    "archived" => TEXT_DIM,
+                    _ => TEXT_LIGHT,
+                };
+                let status_icon = match s.status.as_str() {
+                    "draft" => "○",
+                    "ready" => "◎",
+                    "in-progress" => "◉",
+                    "shipped" => "●",
+                    "archived" => "◌",
+                    _ => "·",
+                };
+                ListItem::new(Line::from(vec![
+                    Span::styled(
+                        format!("{} ", status_icon),
+                        Style::default().fg(status_color),
+                    ),
+                    Span::styled(
+                        truncate_str(&s.title, 30),
+                        Style::default().fg(TEXT_LIGHT),
+                    ),
+                    Span::raw(" "),
+                    Span::styled(
+                        s.area.as_deref().unwrap_or(""),
+                        Style::default().fg(TEXT_DIM),
+                    ),
+                ]))
+            })
+            .collect();
+
+        let list_block = Block::default()
+            .title(title)
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(list_border_color));
+
+        let mut list_state = self.list_state.clone();
+        f.render_stateful_widget(
+            List::new(items)
+                .block(list_block)
+                .highlight_style(Style::default().bg(PANEL_DARK).add_modifier(Modifier::BOLD))
+                .highlight_symbol("▸ "),
+            columns[0],
+            &mut list_state,
+        );
+
+        // --- Right: Preview ---
+        let preview_active = self.active_pane == SpecsPane::Preview;
+        let preview_border = if preview_active {
+            ACCENT_BLUE
+        } else {
+            Color::DarkGray
+        };
+
+        if let Some(spec) = &self.selected_spec {
+            let mut lines = Vec::new();
+
+            // Header info
+            lines.push(Line::from(vec![
+                Span::styled("Title:  ", Style::default().fg(TEXT_DIM)),
+                Span::styled(&spec.title, Style::default().fg(TEXT_LIGHT).add_modifier(Modifier::BOLD)),
+            ]));
+            lines.push(Line::from(vec![
+                Span::styled("Status: ", Style::default().fg(TEXT_DIM)),
+                Span::styled(
+                    spec.status.to_string(),
+                    Style::default().fg(match spec.status {
+                        SpecStatus::Draft => TEXT_DIM,
+                        SpecStatus::Ready => ACCENT_BLUE,
+                        SpecStatus::InProgress => ACCENT_YELLOW,
+                        SpecStatus::Shipped => ACCENT_GREEN,
+                        SpecStatus::Archived => TEXT_DIM,
+                    }),
+                ),
+            ]));
+            if let Some(ref area) = spec.area {
+                lines.push(Line::from(vec![
+                    Span::styled("Area:   ", Style::default().fg(TEXT_DIM)),
+                    Span::styled(area, Style::default().fg(ACCENT_CYAN)),
+                ]));
+            }
+            lines.push(Line::from(vec![
+                Span::styled("Updated:", Style::default().fg(TEXT_DIM)),
+                Span::styled(format!(" {}", spec.updated), Style::default().fg(TEXT_DIM)),
+            ]));
+
+            if !spec.open_questions.is_empty() {
+                lines.push(Line::from(""));
+                lines.push(Line::from(Span::styled(
+                    "Open Questions:",
+                    Style::default().fg(ACCENT_MAGENTA).add_modifier(Modifier::BOLD),
+                )));
+                for q in &spec.open_questions {
+                    lines.push(Line::from(vec![
+                        Span::styled("  • ", Style::default().fg(ACCENT_MAGENTA)),
+                        Span::raw(q.as_str()),
+                    ]));
+                }
+            }
+
+            lines.push(Line::from(""));
+            lines.push(Line::from(Span::styled(
+                "───",
+                Style::default().fg(Color::DarkGray),
+            )));
+            lines.push(Line::from(""));
+
+            // Content
+            for line in preview_content_to_lines(&spec.content) {
+                lines.push(line);
+            }
+
+            let preview = Paragraph::new(Text::from(lines))
                 .block(
                     Block::default()
+                        .title(format!(" {} ", spec.slug))
                         .borders(Borders::ALL)
-                        .title(" DESCRIPTION ")
-                        .border_style(preview_border_style),
+                        .border_style(Style::default().fg(preview_border)),
                 )
                 .wrap(Wrap { trim: false })
-                .scroll((self.preview_scroll, 0)),
-            preview_chunks[0],
-        );
+                .scroll((self.preview_scroll, 0));
 
-        let metadata_block = Block::default()
-            .borders(Borders::ALL)
-            .title(" DETAILS ")
-            .border_style(preview_border_style);
-        if let Some(issue) = &self.selected_issue {
-            let metadata_text = Text::from(vec![
-                Line::from(vec![
-                    Span::styled(" ID:       ", Style::default().fg(TEXT_DIM)),
-                    Span::styled(
-                        format!("#{}", issue.id),
-                        Style::default()
-                            .fg(ACCENT_BLUE)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                ]),
-                Line::from(vec![
-                    Span::styled(" PRIORITY: ", Style::default().fg(TEXT_DIM)),
-                    Span::styled(
-                        format!("{:?}", issue.priority),
-                        Style::default().fg(ACCENT_RED),
-                    ),
-                ]),
-                Line::from(vec![
-                    Span::styled(" LABELS:   ", Style::default().fg(TEXT_DIM)),
-                    Span::styled(issue.labels.join(", "), Style::default().fg(ACCENT_MAGENTA)),
-                ]),
-            ]);
-            f.render_widget(
-                Paragraph::new(metadata_text).block(metadata_block),
-                preview_chunks[1],
-            );
+            f.render_widget(preview, columns[1]);
         } else {
-            f.render_widget(
-                Paragraph::new("No details available").block(metadata_block),
-                preview_chunks[1],
+            let empty = Paragraph::new("Select a spec to preview")
+                .style(Style::default().fg(TEXT_DIM))
+                .block(
+                    Block::default()
+                        .title(" Preview ")
+                        .borders(Borders::ALL)
+                        .border_style(Style::default().fg(preview_border)),
+                );
+            f.render_widget(empty, columns[1]);
+        }
+
+        // --- Footer ---
+        if self.search.active {
+            self.search.render_footer(f, footer_area);
+        } else {
+            render_footer(
+                f,
+                footer_area,
+                vec![
+                    Span::styled(" n", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":new "),
+                    Span::styled("e", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":edit "),
+                    Span::styled("s", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":status "),
+                    Span::styled("x", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":delete "),
+                    Span::styled("/", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":search "),
+                    Span::styled("Tab", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":switch "),
+                    Span::styled("q", Style::default().fg(ACCENT_CYAN).add_modifier(Modifier::BOLD)),
+                    Span::raw(":quit"),
+                ],
             );
         }
 
+        // --- Prompt Overlay ---
         match &self.prompt {
-            AppPrompt::None => {
-                if self.search.active {
-                    self.search.render_footer(f, chunks[1]);
-                } else {
-                    render_footer(
-                        f,
-                        chunks[1],
-                        vec![
-                            Span::styled(
-                                " q",
-                                Style::default().fg(ACCENT_RED).add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":quit "),
-                            Span::styled(
-                                " /",
-                                Style::default()
-                                    .fg(ACCENT_CYAN)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":find "),
-                            Span::styled(
-                                " [ ]",
-                                Style::default()
-                                    .fg(ACCENT_YELLOW)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":reorder "),
-                            Span::styled(
-                                " n",
-                                Style::default()
-                                    .fg(ACCENT_BLUE)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":new "),
-                            Span::styled(
-                                " e",
-                                Style::default()
-                                    .fg(ACCENT_GREEN)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":edit "),
-                            Span::styled(
-                                " t",
-                                Style::default()
-                                    .fg(ACCENT_YELLOW)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":title "),
-                            Span::styled(
-                                " L",
-                                Style::default()
-                                    .fg(ACCENT_MAGENTA)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":labels "),
-                            Span::styled(
-                                " p",
-                                Style::default().fg(ACCENT_RED).add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":prio "),
-                            Span::styled(
-                                " m",
-                                Style::default()
-                                    .fg(ACCENT_MAGENTA)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":status "),
-                            Span::styled(
-                                " x",
-                                Style::default().fg(ACCENT_RED).add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":del "),
-                            Span::styled(
-                                " Tab",
-                                Style::default()
-                                    .fg(ACCENT_CYAN)
-                                    .add_modifier(Modifier::BOLD),
-                            ),
-                            Span::raw(":switch "),
-                        ],
-                    );
-                }
-            }
-            AppPrompt::Input { label, buffer, .. } => {
-                render_footer(
-                    f,
-                    chunks[1],
-                    vec![
-                        Span::styled(
-                            label,
-                            Style::default()
-                                .fg(ACCENT_CYAN)
-                                .add_modifier(Modifier::BOLD),
-                        ),
-                        Span::raw(buffer),
-                        Span::styled(
-                            "█",
-                            Style::default()
-                                .fg(ACCENT_CYAN)
-                                .add_modifier(Modifier::SLOW_BLINK),
-                        ),
-                    ],
+            AppPrompt::Input {
+                label, buffer, ..
+            } => {
+                let area = centered_rect(50, 15, size);
+                f.render_widget(Clear, area);
+                let input = Paragraph::new(Line::from(vec![
+                    Span::raw(buffer.as_str()),
+                    Span::styled(
+                        "█",
+                        Style::default()
+                            .fg(ACCENT_CYAN)
+                            .add_modifier(Modifier::SLOW_BLINK),
+                    ),
+                ]))
+                .block(
+                    Block::default()
+                        .title(format!(" {} ", label))
+                        .borders(Borders::ALL)
+                        .border_style(Style::default().fg(ACCENT_MAGENTA)),
                 );
+                f.render_widget(input, area);
             }
             AppPrompt::Select {
                 label,
@@ -1668,92 +1535,47 @@ impl IssuesApp {
                 selected,
                 ..
             } => {
-                render_footer(
-                    f,
-                    chunks[1],
-                    vec![
-                        Span::styled(
-                            " ESC",
-                            Style::default().fg(ACCENT_RED).add_modifier(Modifier::BOLD),
-                        ),
-                        Span::raw(":cancel "),
-                    ],
-                );
-
-                let area = centered_rect(40, 40, f.area());
+                let area = centered_rect(40, 30, size);
                 f.render_widget(Clear, area);
+
                 let items: Vec<ListItem> = options
                     .iter()
                     .enumerate()
                     .map(|(i, opt)| {
-                        if i == *selected {
-                            ListItem::new(Span::styled(
-                                format!("▸ {}", opt),
-                                Style::default()
-                                    .fg(ACCENT_BLUE)
-                                    .add_modifier(Modifier::BOLD),
-                            ))
+                        let style = if i == *selected {
+                            Style::default()
+                                .fg(ACCENT_CYAN)
+                                .add_modifier(Modifier::BOLD)
                         } else {
-                            ListItem::new(Span::raw(format!("  {}", opt)))
-                        }
+                            Style::default().fg(TEXT_LIGHT)
+                        };
+                        let prefix = if i == *selected { "▸ " } else { "  " };
+                        ListItem::new(Line::from(Span::styled(
+                            format!("{}{}", prefix, opt),
+                            style,
+                        )))
                     })
                     .collect();
+
                 f.render_widget(
                     List::new(items).block(
                         Block::default()
+                            .title(format!(" {} ", label))
                             .borders(Borders::ALL)
-                            .title(label.as_str())
                             .border_style(Style::default().fg(ACCENT_MAGENTA)),
                     ),
                     area,
                 );
             }
+            AppPrompt::None => {}
         }
     }
 }
 
-fn render_issue_column(
-    f: &mut Frame,
-    area: Rect,
-    title: &str,
-    list: &[IssueRow],
-    state: &mut ListState,
-    focused: bool,
-) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title(title)
-        .border_style(if focused {
-            Style::default().fg(ACCENT_BLUE)
-        } else {
-            Style::default().fg(Color::DarkGray)
-        });
-    let items: Vec<ListItem> = list
-        .iter()
-        .map(|i| {
-            let priority_color = match i.priority.as_str() {
-                "critical" | "high" => ACCENT_RED,
-                "medium" => ACCENT_YELLOW,
-                _ => ACCENT_GREEN,
-            };
-            ListItem::new(vec![
-                Line::from(vec![
-                    Span::styled(format!("#{} ", i.id), Style::default().fg(TEXT_DIM)),
-                    Span::raw(&i.title),
-                ]),
-                Line::from(vec![Span::styled(
-                    format!("  {}", i.priority),
-                    Style::default().fg(priority_color),
-                )]),
-            ])
-        })
-        .collect();
-    f.render_stateful_widget(
-        List::new(items)
-            .block(block)
-            .highlight_style(Style::default().bg(PANEL_DARK).add_modifier(Modifier::BOLD))
-            .highlight_symbol("▸ "),
-        area,
-        state,
-    );
+fn truncate_str(s: &str, max: usize) -> String {
+    if s.len() > max {
+        format!("{}...", &s[..max.saturating_sub(3)])
+    } else {
+        s.to_string()
+    }
 }

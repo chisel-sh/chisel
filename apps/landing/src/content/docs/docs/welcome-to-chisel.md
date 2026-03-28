@@ -11,7 +11,7 @@ Chisel is a text-first toolkit for shaping information. Everything you see here 
 
 ### Quick Start
 - Use **Docs** to manage your project's knowledge base.
-- Use **Issues** to track tasks in a local Kanban board.
+- Use **Specs** to track features and decisions through their lifecycle.
 
 ### Navigation
 - `Tab`: Switch between Category, Document, and Preview panes.

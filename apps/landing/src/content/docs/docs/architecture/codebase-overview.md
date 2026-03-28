@@ -15,11 +15,11 @@ The entry point. Handles CLI argument parsing (via `clap`) and orchestrates the 
 ### `packages/chisel-docs`
 Core logic for the documentation engine. Manages document lifecycle, category resolution, and delegates storage to the `DataSource` trait.
 
-### `packages/chisel-issues`
-Core logic for the issue tracker. Manages Kanban status transitions, priority handling, and delegates storage to the `IssueSource` trait.
+### `packages/chisel-specs`
+Core logic for the spec engine. Manages lifecycle status transitions and delegates storage to the `SpecSource` trait.
 
 ### `packages/chisel-store`
-The persistence layer. Wraps **SQLite** (via `sqlx`) to provide the FTS5 full-text search index used by both Docs and Issues.
+The persistence layer. Wraps **SQLite** (via `sqlx`) to provide the FTS5 full-text search index used by both Docs and Specs.
 
 ### `packages/chisel-fs`
 Low-level file system utilities, slugification, and editor spawning logic shared across the workspace.
@@ -28,5 +28,5 @@ Low-level file system utilities, slugification, and editor spawning logic shared
 Shared rendering traits and color tokens for ensuring a consistent look and feel across all TUIs.
 
 ## Design Patterns
-- **Trait-based Adapters**: Both Docs and Issues use a "Source" trait to allow swapping the backend (e.g., local files vs. GitHub API).
+- **Trait-based Adapters**: Both Docs and Specs use a "Source" trait to allow swapping the backend (e.g., local files vs. GitHub API).
 - **Asynchronous by Default**: All services are built using `tokio` to handle concurrent file system and network operations efficiently.

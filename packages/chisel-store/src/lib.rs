@@ -8,16 +8,15 @@ pub struct Store {
     pool: SqlitePool,
 }
 
-pub struct UpdateIssueParams<'a> {
-    pub id: i64,
+pub struct UpdateSpecParams<'a> {
+    pub slug: &'a str,
     pub path: &'a str,
     pub title: &'a str,
     pub status: &'a str,
-    pub priority: &'a str,
-    pub labels: Option<&'a str>,
+    pub area: Option<&'a str>,
     pub content: &'a str,
-    pub order: i32,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created: chrono::NaiveDate,
+    pub updated: chrono::NaiveDate,
 }
 
 pub trait Searchable: for<'r> sqlx::FromRow<'r, sqlx::sqlite::SqliteRow> + Send + Unpin {
@@ -33,13 +32,13 @@ impl Searchable for SearchResult {
     }
 }
 
-impl Searchable for IssueRow {
+impl Searchable for SpecRow {
     fn search_sql() -> &'static str {
-        "SELECT i.id, i.path, i.title, i.status, i.priority, i.labels, i.created_at, i.updated_at, i.\"order\", 
-                snippet(issues_fts, 1, '...', '...', '...', 10) as excerpt
-         FROM issues i
-         JOIN issues_fts f ON i.id = f.rowid
-         WHERE issues_fts MATCH ?
+        "SELECT s.slug, s.path, s.title, s.status, s.area, s.created, s.updated,
+                snippet(specs_fts, 1, '...', '...', '...', 10) as excerpt
+         FROM specs s
+         JOIN specs_fts f ON s.rowid = f.rowid
+         WHERE specs_fts MATCH ?
          ORDER BY rank"
     }
 }
@@ -109,38 +108,35 @@ impl Store {
         Ok(())
     }
 
-    pub async fn update_issue(&self, params: UpdateIssueParams<'_>) -> Result<()> {
+    pub async fn update_spec(&self, params: UpdateSpecParams<'_>) -> Result<()> {
         sqlx::query(
-            "INSERT INTO issues (id, path, title, status, priority, labels, content, \"order\", created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-             ON CONFLICT(id) DO UPDATE SET
+            "INSERT INTO specs (slug, path, title, status, area, content, created, updated)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(slug) DO UPDATE SET
                 path = excluded.path,
                 title = excluded.title,
                 status = excluded.status,
-                priority = excluded.priority,
-                labels = excluded.labels,
+                area = excluded.area,
                 content = excluded.content,
-                \"order\" = excluded.\"order\",
-                updated_at = excluded.updated_at",
+                updated = excluded.updated",
         )
-        .bind(params.id)
+        .bind(params.slug)
         .bind(params.path)
         .bind(params.title)
         .bind(params.status)
-        .bind(params.priority)
-        .bind(params.labels)
+        .bind(params.area)
         .bind(params.content)
-        .bind(params.order)
-        .bind(params.created_at)
+        .bind(params.created)
+        .bind(params.updated)
         .execute(&self.pool)
         .await?;
 
         Ok(())
     }
 
-    pub async fn delete_issue(&self, id: i64) -> Result<()> {
-        sqlx::query("DELETE FROM issues WHERE id = ?")
-            .bind(id)
+    pub async fn delete_spec(&self, slug: &str) -> Result<()> {
+        sqlx::query("DELETE FROM specs WHERE slug = ?")
+            .bind(slug)
             .execute(&self.pool)
             .await?;
         Ok(())
@@ -202,11 +198,11 @@ impl Store {
             });
         }
 
-        // 2. Fetch Issues
-        let issues = sqlx::query_as::<_, (String, String)>(
+        // 2. Fetch Specs
+        let specs = sqlx::query_as::<_, (String, String)>(
             "SELECT path, content
-             FROM issues_fts
-             WHERE issues_fts MATCH ?
+             FROM specs_fts
+             WHERE specs_fts MATCH ?
              ORDER BY rank
              LIMIT 10",
         )
@@ -214,11 +210,11 @@ impl Store {
         .fetch_all(&self.pool)
         .await?;
 
-        for (path, content) in issues {
+        for (path, content) in specs {
             items.push(ContextItem {
                 path,
                 content,
-                r#type: "issue".to_string(),
+                r#type: "spec".to_string(),
             });
         }
 
@@ -237,19 +233,19 @@ impl Store {
         Ok(results)
     }
 
-    pub async fn get_issues(&self, status: Option<&str>) -> Result<Vec<IssueRow>> {
+    pub async fn get_specs(&self, status: Option<&str>) -> Result<Vec<SpecRow>> {
         let query = if let Some(s) = status {
-            sqlx::query_as::<_, IssueRow>(
-                "SELECT id, path, title, status, priority, labels, created_at, updated_at, \"order\", SUBSTR(content, 1, 100) as excerpt
-                 FROM issues
+            sqlx::query_as::<_, SpecRow>(
+                "SELECT slug, path, title, status, area, created, updated, SUBSTR(content, 1, 100) as excerpt
+                 FROM specs
                  WHERE status = ?
-                 ORDER BY \"order\" ASC, priority DESC, id DESC"
+                 ORDER BY status, updated DESC"
             ).bind(s)
         } else {
-            sqlx::query_as::<_, IssueRow>(
-                "SELECT id, path, title, status, priority, labels, created_at, updated_at, \"order\", SUBSTR(content, 1, 100) as excerpt
-                 FROM issues
-                 ORDER BY status, \"order\" ASC, priority DESC, id DESC"
+            sqlx::query_as::<_, SpecRow>(
+                "SELECT slug, path, title, status, area, created, updated, SUBSTR(content, 1, 100) as excerpt
+                 FROM specs
+                 ORDER BY status, updated DESC"
             )
         };
 
@@ -308,53 +304,51 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_issue_crud() {
-        let store = test_store("issue_crud").await;
-        let now = chrono::Utc::now();
+    async fn test_spec_crud() {
+        let store = test_store("spec_crud").await;
+        let today = chrono::NaiveDate::from_ymd_opt(2026, 3, 28).unwrap();
 
         // Create
         store
-            .update_issue(UpdateIssueParams {
-                id: 1,
-                path: "issues/0001.md",
-                title: "Issue 1",
-                status: "todo",
-                priority: "high",
-                labels: None,
-                content: "Fix it",
-                order: 0,
-                created_at: now,
+            .update_spec(UpdateSpecParams {
+                slug: "user-auth",
+                path: "specs/active/user-auth.md",
+                title: "User Auth",
+                status: "draft",
+                area: Some("auth"),
+                content: "Implement user authentication",
+                created: today,
+                updated: today,
             })
             .await
             .unwrap();
 
-        let issues = store.get_issues(None).await.unwrap();
-        assert_eq!(issues.len(), 1);
-        assert_eq!(issues[0].title, "Issue 1");
+        let specs = store.get_specs(None).await.unwrap();
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs[0].title, "User Auth");
 
         // Update status
         store
-            .update_issue(UpdateIssueParams {
-                id: 1,
-                path: "issues/0001.md",
-                title: "Issue 1",
+            .update_spec(UpdateSpecParams {
+                slug: "user-auth",
+                path: "specs/active/user-auth.md",
+                title: "User Auth",
                 status: "in-progress",
-                priority: "high",
-                labels: None,
-                content: "Fix it",
-                order: 0,
-                created_at: now,
+                area: Some("auth"),
+                content: "Implement user authentication",
+                created: today,
+                updated: today,
             })
             .await
             .unwrap();
-        let issues = store.get_issues(Some("in-progress")).await.unwrap();
-        assert_eq!(issues.len(), 1);
-        assert_eq!(issues[0].status, "in-progress");
+        let specs = store.get_specs(Some("in-progress")).await.unwrap();
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs[0].status, "in-progress");
 
         // Delete
-        store.delete_issue(1).await.unwrap();
-        let issues = store.get_issues(None).await.unwrap();
-        assert_eq!(issues.len(), 0);
+        store.delete_spec("user-auth").await.unwrap();
+        let specs = store.get_specs(None).await.unwrap();
+        assert_eq!(specs.len(), 0);
     }
 
     #[tokio::test]
@@ -403,6 +397,7 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_context() {
         let store = test_store("context").await;
+        let today = chrono::NaiveDate::from_ymd_opt(2026, 3, 28).unwrap();
 
         // Seed Docs
         store
@@ -428,18 +423,17 @@ mod tests {
             .await
             .unwrap();
 
-        // Seed Issues
+        // Seed Specs
         store
-            .update_issue(UpdateIssueParams {
-                id: 1,
-                path: "issue1.md",
-                title: "Context Issue",
-                status: "open",
-                priority: "high",
-                labels: None,
+            .update_spec(UpdateSpecParams {
+                slug: "routing-fix",
+                path: "specs/active/routing-fix.md",
+                title: "Routing Fix",
+                status: "in-progress",
+                area: Some("infra"),
                 content: "We need to fix the routing bug.",
-                order: 0,
-                created_at: chrono::Utc::now(),
+                created: today,
+                updated: today,
             })
             .await
             .unwrap();
@@ -447,29 +441,27 @@ mod tests {
         // Search for "routing"
         let results = store.fetch_context("routing").await.unwrap();
 
-        assert_eq!(results.len(), 2); // 1 doc + 1 issue
+        assert_eq!(results.len(), 2); // 1 doc + 1 spec
 
         let doc = results.iter().find(|i| i.r#type == "document").unwrap();
         assert_eq!(doc.path, "doc1.md");
         assert!(doc.content.contains("relevant context"));
 
-        let issue = results.iter().find(|i| i.r#type == "issue").unwrap();
-        assert_eq!(issue.path, "issue1.md");
-        assert!(issue.content.contains("fix the routing bug"));
+        let spec = results.iter().find(|i| i.r#type == "spec").unwrap();
+        assert_eq!(spec.path, "specs/active/routing-fix.md");
+        assert!(spec.content.contains("fix the routing bug"));
     }
 }
 
 #[derive(sqlx::FromRow, serde::Serialize, serde::Deserialize, Debug, Clone)]
-pub struct IssueRow {
-    pub id: i64,
+pub struct SpecRow {
+    pub slug: String,
     pub path: String,
     pub title: String,
     pub status: String,
-    pub priority: String,
-    pub labels: Option<String>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
-    pub order: i32,
+    pub area: Option<String>,
+    pub created: chrono::NaiveDate,
+    pub updated: chrono::NaiveDate,
     pub excerpt: String,
 }
 

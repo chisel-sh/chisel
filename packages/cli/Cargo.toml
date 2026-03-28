@@ -19,7 +19,7 @@ chisel-render = { path = "../chisel-render" }
 chisel-store = { path = "../chisel-store" }
 chisel-fs = { path = "../chisel-fs" }
 chisel-docs = { path = "../chisel-docs" }
-chisel-issues = { path = "../chisel-issues" }
+chisel-specs = { path = "../chisel-specs" }
 clap.workspace = true
 tokio.workspace = true
 anyhow.workspace = true

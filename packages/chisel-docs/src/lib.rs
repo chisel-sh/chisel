@@ -601,7 +601,7 @@ impl DocsService {
                 tags: vec!["chisel".to_string(), "onboarding".to_string()],
                 order: None,
             };
-            let content = "Chisel is a text-first toolkit for shaping information. Everything you see here is stored as plain Markdown files in your project.\n\n### Quick Start\n- Use **Docs** to manage your project's knowledge base.\n- Use **Issues** to track tasks in a local Kanban board.\n\n### Navigation\n- `Tab`: Switch between Category, Document, and Preview panes.\n- `j`/`k`: Move selection up and down.\n- `q`: Exit the TUI and return to your shell.";
+            let content = "Chisel is a local-first knowledge base for your project. Everything you see here is stored as plain Markdown files in your project.\n\n### Quick Start\n- Use **Docs** to manage your project's permanent knowledge base.\n- Use **Specs** (`chisel spec`) to manage lifecycle-aware feature specs.\n- Use `chisel context create <query>` to generate LLM context from docs and specs.\n\n### Navigation\n- `Tab`: Switch between Category, Document, and Preview panes.\n- `j`/`k`: Move selection up and down.\n- `q`: Exit the TUI and return to your shell.";
 
             let doc = Doc {
                 name: "welcome-to-chisel.md".to_string(),

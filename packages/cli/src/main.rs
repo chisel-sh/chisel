@@ -3,21 +3,21 @@ mod upgrade;
 
 use anyhow::Result;
 use chisel_docs::{DocsService, ListOptions};
-use chisel_issues::{IssuePriority, IssueStatus, IssuesService};
 use chisel_render::OutputMode;
+use chisel_specs::{SpecStatus, SpecsService};
 use chisel_store::{ContextItem, Store};
 use clap::{Parser, Subcommand};
-use dialoguer::{Input, Select};
+use dialoguer::Input;
 use std::path::PathBuf;
 use std::str::FromStr;
-use tui::{DocsApp, IssuesApp};
+use tui::{DocsApp, SpecsApp};
 use upgrade::UpgradeService;
 
 fn format_context_xml(items: Vec<ContextItem>) -> String {
     let mut output = String::from("<context>\n");
     for item in items {
-        let tag = if item.r#type == "issue" {
-            "issue"
+        let tag = if item.r#type == "spec" {
+            "spec"
         } else {
             "file"
         };
@@ -53,10 +53,10 @@ enum Commands {
         #[command(subcommand)]
         command: Option<DocsCommands>,
     },
-    /// Manage issues
-    Issues {
+    /// Manage specs
+    Spec {
         #[command(subcommand)]
-        command: Option<IssuesCommands>,
+        command: Option<SpecCommands>,
     },
     /// Generate context for LLMs
     Context {
@@ -162,91 +162,55 @@ enum DocsCommands {
 }
 
 #[derive(Subcommand)]
-enum IssuesCommands {
-    /// Show issues overview
-    Overview,
-    /// List available issues
+enum SpecCommands {
+    /// Create a new spec
+    New {
+        /// The title of the spec
+        title: Option<String>,
+
+        /// The area/domain
+        #[arg(short, long)]
+        area: Option<String>,
+
+        /// Template to use (feature, adr)
+        #[arg(short, long)]
+        template: Option<String>,
+    },
+    /// List specs
     List {
-        /// Filter by status
+        /// Filter by status (draft, ready, in-progress, shipped, archived)
         #[arg(short, long)]
         status: Option<String>,
     },
-    /// Show issue details
-    Show {
-        /// The issue ID
-        id: i64,
+    /// View a spec
+    View {
+        /// The spec slug
+        slug: String,
     },
-    /// Create a new issue
-    New {
-        /// The title of the issue
-        #[arg(short, long)]
-        title: Option<String>,
-
-        /// The priority (low, medium, high, critical)
-        #[arg(short, long)]
-        priority: Option<String>,
-
-        /// The labels (comma-separated)
-        #[arg(short, long)]
-        labels: Option<String>,
+    /// Change spec status
+    Status {
+        /// The spec slug
+        slug: String,
+        /// New status (draft, ready, in-progress, shipped, archived)
+        new_status: String,
     },
-    /// Edit an issue
-    Edit {
-        /// The issue ID
-        id: i64,
-    },
-    /// Close an issue
-    Close {
-        /// The issue ID
-        id: i64,
-    },
-    /// Delete an issue
-    Delete {
-        /// The issue ID
-        id: i64,
-    },
-    /// Reorder an issue
-    Reorder {
-        /// The issue ID
-        id: i64,
-        /// The new order (integer)
-        order: i32,
-    },
-    /// Update issue priority
-    UpdatePriority {
-        /// The issue ID
-        id: i64,
-        /// The new priority
-        priority: String,
-    },
-    /// Update issue title
-    UpdateTitle {
-        /// The issue ID
-        id: i64,
-        /// The new title
-        title: String,
-    },
-    /// Update issue status
-    UpdateStatus {
-        /// The issue ID
-        id: i64,
-        /// The new status
-        status: String,
-    },
-    /// Update issue labels
-    UpdateLabels {
-        /// The issue ID
-        id: i64,
-        /// The new labels (comma-separated)
-        labels: String,
-    },
-    /// Index all issues
-    Index,
-    /// Search issues
+    /// Search specs
     Search {
         /// The search query
         query: String,
     },
+    /// Edit a spec
+    Edit {
+        /// The spec slug
+        slug: String,
+    },
+    /// Delete a spec
+    Delete {
+        /// The spec slug
+        slug: String,
+    },
+    /// Index all specs
+    Index,
 }
 
 #[tokio::main]
@@ -400,36 +364,13 @@ async fn main() -> Result<()> {
                 }
             }
         }
-        Commands::Issues { command } => {
-            let service = IssuesService::new(root).await?;
+        Commands::Spec { command } => {
+            let service = SpecsService::new(root).await?;
             match command {
-                Some(IssuesCommands::Overview) => {
-                    mode.render(service.list(None).await?)?;
-                }
-                Some(IssuesCommands::List { status }) => {
-                    let status_enum =
-                        status.and_then(|s| IssueStatus::from_str(&s.to_lowercase()).ok());
-                    match mode {
-                        OutputMode::Machine => {
-                            mode.render(service.list(status_enum).await?)?;
-                        }
-                        OutputMode::Human => {
-                            run_issues_explorer(service, mode, status_enum, None).await?;
-                        }
-                    }
-                }
-                Some(IssuesCommands::Show { id }) => match mode {
-                    OutputMode::Machine => {
-                        mode.render(service.show(id).await?)?;
-                    }
-                    OutputMode::Human => {
-                        run_issues_explorer(service, mode, None, Some(id)).await?;
-                    }
-                },
-                Some(IssuesCommands::New {
+                Some(SpecCommands::New {
                     title,
-                    priority,
-                    labels,
+                    area,
+                    template,
                 }) => {
                     let title = match title {
                         Some(t) => t,
@@ -438,95 +379,78 @@ async fn main() -> Result<()> {
                                 anyhow::bail!("Title is required in machine mode");
                             }
                             Input::<String>::new()
-                                .with_prompt("Issue Title")
+                                .with_prompt("Spec Title")
                                 .interact_text()?
                         }
                     };
-                    let priority = parse_priority(priority, mode)?;
-
-                    let label_vec = labels
-                        .map(|l| {
-                            l.split(',')
-                                .map(|s| s.trim().to_string())
-                                .filter(|s| !s.is_empty())
-                                .collect()
-                        })
-                        .unwrap_or_default();
-
-                    let content = if let OutputMode::Human = mode {
-                        "Enter description here..."
-                    } else {
-                        ""
-                    };
-
-                    let issue = service.create(&title, priority, label_vec, content).await?;
+                    let spec = service
+                        .create(&title, area, template.as_deref(), None)
+                        .await?;
                     match mode {
                         OutputMode::Machine => {
-                            mode.render(issue)?;
+                            mode.render(spec)?;
                         }
                         OutputMode::Human => {
-                            run_issues_explorer(service, mode, None, Some(issue.id)).await?;
+                            println!("Created spec: {} ({})", spec.title, spec.slug);
+                            println!("  → {}", spec.path.display());
                         }
                     }
                 }
-                Some(IssuesCommands::Edit { id }) => match mode {
-                    OutputMode::Machine => {
-                        mode.render(service.edit(id).await?)?;
+                Some(SpecCommands::List { status }) => {
+                    let status_enum =
+                        status.and_then(|s| SpecStatus::from_str(&s.to_lowercase()).ok());
+                    match mode {
+                        OutputMode::Machine => {
+                            mode.render(service.list(status_enum).await?)?;
+                        }
+                        OutputMode::Human => {
+                            run_specs_explorer(service, mode, status_enum).await?;
+                        }
                     }
-                    OutputMode::Human => {
-                        run_issues_explorer(service, mode, None, Some(id)).await?;
-                    }
-                },
-                Some(IssuesCommands::Close { id }) => {
-                    let issue = service.update_status(id, IssueStatus::Closed).await?;
-                    mode.render(issue)?;
                 }
-                Some(IssuesCommands::Delete { id }) => {
-                    service.delete(id).await?;
+                Some(SpecCommands::View { slug }) => {
+                    let spec = service.show(&slug).await?;
+                    mode.render(spec)?;
+                }
+                Some(SpecCommands::Status { slug, new_status }) => {
+                    let s_enum = SpecStatus::from_str(&new_status.to_lowercase())
+                        .map_err(|_| anyhow::anyhow!("Invalid status: {}", new_status))?;
+                    let spec = service.update_status(&slug, s_enum).await?;
+                    match mode {
+                        OutputMode::Machine => {
+                            mode.render(spec)?;
+                        }
+                        OutputMode::Human => {
+                            println!(
+                                "Updated '{}' → {} ({})",
+                                spec.slug,
+                                spec.status,
+                                spec.path.display()
+                            );
+                        }
+                    }
+                }
+                Some(SpecCommands::Search { query }) => {
+                    mode.render(service.search(&query).await?)?;
+                }
+                Some(SpecCommands::Edit { slug }) => {
+                    let spec = service.edit(&slug).await?;
+                    mode.render(spec)?;
+                }
+                Some(SpecCommands::Delete { slug }) => {
+                    service.delete(&slug).await?;
                     if let OutputMode::Human = mode {
-                        println!("Deleted issue #{}", id);
+                        println!("Deleted spec: {}", slug);
                     }
                 }
-                Some(IssuesCommands::Reorder { id, order }) => {
-                    let issue = service.update_order(id, order).await?;
-                    mode.render(issue)?;
-                }
-                Some(IssuesCommands::UpdatePriority { id, priority }) => {
-                    let p_enum = IssuePriority::from_str(&priority.to_lowercase())
-                        .map_err(|_| anyhow::anyhow!("Invalid priority: {}", priority))?;
-                    let issue = service.update_priority(id, p_enum).await?;
-                    mode.render(issue)?;
-                }
-                Some(IssuesCommands::UpdateTitle { id, title }) => {
-                    let issue = service.update_title(id, title).await?;
-                    mode.render(issue)?;
-                }
-                Some(IssuesCommands::UpdateStatus { id, status }) => {
-                    let s_enum = IssueStatus::from_str(&status.to_lowercase())
-                        .map_err(|_| anyhow::anyhow!("Invalid status: {}", status))?;
-                    let issue = service.update_status(id, s_enum).await?;
-                    mode.render(issue)?;
-                }
-                Some(IssuesCommands::UpdateLabels { id, labels }) => {
-                    let label_vec = labels
-                        .split(',')
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                    let issue = service.update_labels(id, label_vec).await?;
-                    mode.render(issue)?;
-                }
-                Some(IssuesCommands::Index) => {
+                Some(SpecCommands::Index) => {
                     service.index_all().await?;
                     if let OutputMode::Human = mode {
                         println!("Indexing complete.");
                     }
                 }
-                Some(IssuesCommands::Search { query }) => {
-                    mode.render(service.search(&query).await?)?;
-                }
                 None => {
-                    run_issues_explorer(service, mode, None, None).await?;
+                    run_specs_explorer(service, mode, None).await?;
                 }
             }
         }
@@ -560,25 +484,23 @@ async fn init_workspace(
         println!("Initializing Chisel workspace for: {}...", project_name);
     }
 
-    // 1. Create .chisel directory
+    // 1. Create .chisel directory for docs + index
     let chisel_dir = root.join(".chisel");
     let docs_dir = chisel_dir.join("docs");
-    let issues_dir = chisel_dir.join("issues");
     std::fs::create_dir_all(&docs_dir)?;
-    std::fs::create_dir_all(&issues_dir)?;
 
     // 2. Initialize Services
     let docs_service = DocsService::new(root.to_path_buf()).await?;
-    let issues_service = IssuesService::new(root.to_path_buf()).await?;
+    let specs_service = SpecsService::new(root.to_path_buf()).await?;
 
     // 3. Delegate seed generation to services
     docs_service.init(&project_name).await?;
-    issues_service.init().await?;
+    specs_service.init().await?;
 
     // 4. Generate AI Agent Prompt
     let prompt_path = chisel_dir.join("PROMPT.md");
     let prompt_content = format!(
-        "# Chisel Project: {}\n\nThis project uses Chisel for its documentation and issue tracking.\n\n## Structure\n- Docs: `.chisel/docs/` (Markdown)\n- Issues: `.chisel/issues/` (Markdown with YAML frontmatter)\n\n## Guidelines\nWhen performing tasks in this repo, you can use `chisel docs` and `chisel issues` with the `--machine` flag to inspect and update the project state efficiently.",
+        "# Chisel Project: {}\n\nThis project uses Chisel for documentation and specs.\n\n## Structure\n- Docs: `.chisel/docs/` (Markdown)\n- Specs: `specs/` (Markdown with YAML frontmatter, organized by lifecycle)\n  - `specs/active/` — drafts, ready, and in-progress specs\n  - `specs/shipped/` — completed specs\n  - `specs/archived/` — superseded or abandoned specs\n\n## Guidelines\nWhen performing tasks in this repo, you can use `chisel docs` and `chisel spec` with the `--machine` flag to inspect and update the project state efficiently.\n\nUse `chisel context create <query>` to gather relevant docs and specs as structured context.",
         project_name
     );
     std::fs::write(&prompt_path, prompt_content)?;
@@ -597,8 +519,8 @@ async fn init_workspace(
     }
 
     if let OutputMode::Human = mode {
-        println!("Success! Chisel is ready at .chisel/");
-        println!("Try running `chisel docs` or `chisel issues` to begin.");
+        println!("Success! Chisel is ready.");
+        println!("Try running `chisel docs` or `chisel spec` to begin.");
     }
     Ok(())
 }
@@ -628,61 +550,21 @@ async fn run_docs_explorer(
     Ok(())
 }
 
-async fn run_issues_explorer(
-    service: IssuesService,
+async fn run_specs_explorer(
+    service: SpecsService,
     mode: OutputMode,
-    status_filter: Option<IssueStatus>,
-    initial_id: Option<i64>,
+    status_filter: Option<SpecStatus>,
 ) -> Result<()> {
-    if !service.root.join(".chisel").exists() {
-        if let OutputMode::Human = mode {
-            println!("This directory is not a Chisel workspace.");
-            println!("Run `chisel init` to get started.");
-            return Ok(());
-        }
-    }
-
     match mode {
         OutputMode::Machine => {
             mode.render(service.list(status_filter).await?)?;
         }
         OutputMode::Human => {
-            let mut app = IssuesApp::new(service, status_filter, initial_id).await?;
+            let mut app = SpecsApp::new(service, status_filter).await?;
             let _ = app.run().await?;
         }
     }
     Ok(())
-}
-
-fn parse_priority(priority: Option<String>, mode: OutputMode) -> Result<IssuePriority> {
-    match priority {
-        Some(p) => IssuePriority::from_str(&p.to_lowercase()).or_else(|_| {
-            if p.to_lowercase() == "med" {
-                Ok(IssuePriority::Medium)
-            } else {
-                Err(anyhow::anyhow!("Invalid priority: {}", p))
-            }
-        }),
-        None => {
-            if let OutputMode::Machine = mode {
-                Ok(IssuePriority::Medium)
-            } else {
-                let options = vec!["Low", "Medium", "High", "Critical"];
-                let selection = Select::new()
-                    .with_prompt("Priority")
-                    .items(&options)
-                    .default(1)
-                    .interact()?;
-                Ok(match selection {
-                    0 => IssuePriority::Low,
-                    1 => IssuePriority::Medium,
-                    2 => IssuePriority::High,
-                    3 => IssuePriority::Critical,
-                    _ => IssuePriority::Medium,
-                })
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -704,12 +586,17 @@ mod tests {
         assert!(root
             .join(".chisel/docs/tutorial/working-with-docs.md")
             .exists());
-        assert!(root.join(".chisel/issues").exists());
+        assert!(root.join("specs/active").exists());
+        assert!(root.join("specs/shipped").exists());
+        assert!(root.join("specs/archived").exists());
         assert!(root.join(".chisel/PROMPT.md").exists());
         assert!(root.join(".gitignore").exists());
 
         let gitignore = std::fs::read_to_string(root.join(".gitignore")).unwrap();
         assert!(gitignore.contains(".chisel/index.db"));
+
+        let prompt = std::fs::read_to_string(root.join(".chisel/PROMPT.md")).unwrap();
+        assert!(prompt.contains("specs"));
     }
 
     #[test]
@@ -721,9 +608,9 @@ mod tests {
                 r#type: "document".to_string(),
             },
             ContextItem {
-                path: "path/to/issue.md".to_string(),
-                content: "Issue content".to_string(),
-                r#type: "issue".to_string(),
+                path: "specs/active/auth.md".to_string(),
+                content: "Spec content".to_string(),
+                r#type: "spec".to_string(),
             },
         ];
 
@@ -733,9 +620,9 @@ mod tests {
         assert!(output.contains("<file path=\"path/to/doc.md\">"));
         assert!(output.contains("# Title\nContent"));
         assert!(output.contains("</file>"));
-        assert!(output.contains("<issue path=\"path/to/issue.md\">"));
-        assert!(output.contains("Issue content"));
-        assert!(output.contains("</issue>"));
+        assert!(output.contains("<spec path=\"specs/active/auth.md\">"));
+        assert!(output.contains("Spec content"));
+        assert!(output.contains("</spec>"));
         assert!(output.contains("</context>"));
     }
 }

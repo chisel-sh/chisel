@@ -50,4 +50,4 @@ Integrating Chisel with Starlight allows a single set of Markdown files to serve
 
 If we expose the `DataSource` trait via **WASM** or a **JSON-RPC** interface, community members could write external plugins such as:
 *   `chisel-plugin-notion` (Syncs Notion pages to Chisel TUI)
-*   `chisel-plugin-linear` (Syncs Linear issues to Chisel TUI)
+*   `chisel-plugin-linear` (Syncs Linear specs to Chisel TUI)

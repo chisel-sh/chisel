@@ -216,8 +216,8 @@ dependencies = [
  "anyhow",
  "chisel-docs",
  "chisel-fs",
- "chisel-issues",
  "chisel-render",
+ "chisel-specs",
  "chisel-store",
  "chrono",
  "clap",
@@ -262,7 +262,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "chisel-issues"
+name = "chisel-render"
+version = "0.1.8"
+dependencies = [
+ "anyhow",
+ "ratatui",
+ "serde",
+ "serde_yaml",
+]
+
+[[package]]
+name = "chisel-specs"
 version = "0.1.8"
 dependencies = [
  "anyhow",
@@ -278,16 +288,6 @@ dependencies = [
  "strum_macros",
  "tempfile",
  "tokio",
-]
-
-[[package]]
-name = "chisel-render"
-version = "0.1.8"
-dependencies = [
- "anyhow",
- "ratatui",
- "serde",
- "serde_yaml",
 ]
 
 [[package]]
