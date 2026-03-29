@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.0](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.8...chisel-v0.2.0) - 2026-03-29
+
+### Added
+
+- [**breaking**] replace issues with specs primitive and refocus marketing ([#24](https://github.com/chisel-sh/chisel/pull/24))
+- implement 'context create' command for LLM context generation ([#23](https://github.com/chisel-sh/chisel/pull/23))
+
 ## [0.1.8](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.7...chisel-v0.1.8) - 2026-02-20
 
 ### Other
