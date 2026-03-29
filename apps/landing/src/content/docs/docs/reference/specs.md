@@ -2,8 +2,8 @@
 title: Specs Reference
 description: Frontmatter schema, CLI commands, and directory structure for Chisel Specs.
 sidebar:
-  order: 3
-  label: Specs
+  order: 2
+  label: Specs Reference
 ---
 
 

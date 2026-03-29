@@ -1,8 +1,8 @@
 ---
 title: Docs Reference
-created_at: 2026-02-15T15:00:00Z
-tags: [reference, docs]
-order: 2
+sidebar:
+  order: 3
+  label: Docs Reference
 ---
 
 

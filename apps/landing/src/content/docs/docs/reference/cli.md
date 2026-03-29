@@ -1,8 +1,8 @@
 ---
 title: CLI Reference
-created_at: 2026-02-15T15:00:00Z
-tags: [reference, cli]
-order: 1
+sidebar:
+  order: 1
+  label: CLI Reference
 ---
 
 
