@@ -1,16 +1,15 @@
 # Chisel
 
-Text-first tools for shaping information — crafted for developers, structured for AI.
+The project brain for founders building with AI agents.
 
-Chisel is a suite of terminal-native tools that help you organize knowledge, understand systems, and manage work — whether you’re a human or an LLM.
+Chisel is a local-first knowledge base for your project. Specs for active work. Docs for permanent knowledge. Both structured so your LLM tools can read them as context when they need it.
 
 ## Features
 
+- **Chisel Specs**: Lifecycle-aware specs for active work. Draft → ready → in-progress → shipped → archived.
 - **Chisel Docs**: A knowledge base that understands structure. Markdown-first. Git-backed.
-- **Chisel Issues**: A text-first issue tracker. Local files, clean TUI board, agent-friendly APIs.
-- **Chisel Observe** (Coming Soon): Observability without dashboards. Logs, metrics, and traces in a terminal UI.
 - **Human Mode & Machine Mode**: Every tool supports a mode optimized for LLM context windows and parsing.
-- **Local-first**: Data lives with you by default; cloud is optional.
+- **Local-first**: Data lives with you by default. Version-controlled alongside your code.
 - **Rust-powered**: Near-zero overhead and sub-10ms latency.
 
 ## Installation
@@ -27,16 +26,22 @@ Initialize a new Chisel workspace in your project:
 chisel init
 ```
 
+Create your first spec:
+
+```bash
+chisel spec new "user authentication"
+```
+
 Explore your docs:
 
 ```bash
 chisel docs
 ```
 
-Manage your issues:
+Generate LLM context:
 
 ```bash
-chisel issues
+chisel context create "auth"
 ```
 
 ## Contributing

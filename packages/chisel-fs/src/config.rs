@@ -5,10 +5,16 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ChiselConfig {
     pub docs: Option<DocsConfig>,
+    pub specs: Option<SpecsConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DocsConfig {
+    pub source: Option<PathBuf>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SpecsConfig {
     pub source: Option<PathBuf>,
 }
 

@@ -8,19 +8,17 @@ const version = import.meta.env.CHISEL_VERSION;
 ---
 
 <Layout
-    title="Chisel | Text-first tools for shaping information."
+    title="Chisel | The project brain for founders building with AI agents."
     preloadVideos={[
         "/assets/docs_human.webm",
         "/assets/docs_machine.webm",
-        "/assets/issues_human.webm",
-        "/assets/issues_machine.webm",
     ]}
 >
     <MarqueeBanner />
     <nav class="max-w-6xl mx-auto px-4 py-6 flex justify-end">
         <a href="/docs" class="text-sm font-mono text-gray-400 hover:text-[#4DA3FF] transition-colors flex items-center gap-2 group">
-            Documentation 
-            <span class="group-hover:translate-x-1 transition-transform">→</span>
+            Documentation
+            <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
         </a>
     </nav>
     <main class="max-w-6xl mx-auto px-4 py-20 sm:py-32">
@@ -40,14 +38,14 @@ const version = import.meta.env.CHISEL_VERSION;
                 class="text-xl sm:text-2xl text-gray-400 max-w-3xl mx-auto mb-10 font-mono"
             >
                 <span class="text-[#4DA3FF]"
-                    >Text-first tools for shaping information.</span
+                    >Your codebase grows faster than your memory.</span
                 ><br />
-                Crafted for developers. Structured for AI.
+                Chisel keeps you the architect.
             </p>
             <p class="text-lg text-gray-300 max-w-2xl mx-auto mb-12">
-                A suite of terminal-native tools that help you organize
-                knowledge, understand systems, and manage work — whether you’re
-                a human or an LLM.
+                Structured specs and docs your LLM can actually use. Write once,
+                query from anywhere. The project brain for solo founders and
+                small teams building with AI agents.
             </p>
 
             <div class="max-w-md mx-auto mb-12">
@@ -145,7 +143,25 @@ const version = import.meta.env.CHISEL_VERSION;
             </div>
         </section>
 
-        <!-- Availability Status -->
+        <!-- The Problem -->
+        <section class="max-w-3xl mx-auto mb-32 text-center">
+            <h2 class="text-3xl font-bold mb-8 text-[#EDEDED]">
+                The context problem
+            </h2>
+            <p class="text-gray-400 leading-relaxed text-lg mb-6">
+                Solo founders and small teams using LLM agents ship fast &mdash; faster than
+                any human can track. Six months in, the codebase has outgrown your ability
+                to hold it in your head. Every new agent session starts from scratch.
+                Decisions are made twice. Architecture drifts from intent.
+            </p>
+            <p class="text-gray-300 leading-relaxed text-lg">
+                Chisel is the infrastructure that preserves your reasoning. Specs capture
+                intent, constraints, and decisions. Docs preserve permanent knowledge.
+                Both are structured so your LLM tools can read them as context when they need it.
+            </p>
+        </section>
+
+        <!-- The Primitives -->
         <section class="max-w-4xl mx-auto mb-32">
             <div
                 class="bg-[#1A1A1A]/50 border border-gray-800 rounded-2xl p-8 backdrop-blur-sm"
@@ -156,56 +172,67 @@ const version = import.meta.env.CHISEL_VERSION;
                     <span
                         class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
                     ></span>
-                    Project Status & Roadmap
+                    Available Now
                 </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div class="space-y-2">
+                        <div
+                            class="text-xs font-mono text-[#BB6BD9] uppercase tracking-widest font-bold"
+                        >
+                            New
+                        </div>
+                        <h3 class="font-bold text-[#EDEDED]">Chisel Specs</h3>
+                        <p class="text-sm text-gray-400">
+                            Lifecycle-aware specs for active work. Draft &rarr; ready &rarr;
+                            in-progress &rarr; shipped. The highest-value context artifact
+                            for your LLM mid-implementation.
+                        </p>
+                    </div>
+                    <div class="space-y-2 border-l-0 sm:border-l border-gray-800 pl-0 sm:pl-8">
                         <div
                             class="text-xs font-mono text-blue-400 uppercase tracking-widest font-bold"
                         >
-                            Available Now
+                            Stable
                         </div>
                         <h3 class="font-bold text-[#EDEDED]">Chisel Docs</h3>
                         <p class="text-sm text-gray-400">
-                            Knowledge base with 3-pane TUI explorer and SQLite
-                            indexing.
-                        </p>
-                    </div>
-                    <div class="space-y-2 border-l-0 sm:border-l border-gray-800 pl-0 sm:pl-8">
-                        <div
-                            class="text-xs font-mono text-blue-400 uppercase tracking-widest font-bold"
-                        >
-                            Available Now
-                        </div>
-                        <h3 class="font-bold text-[#EDEDED]">Chisel Issues</h3>
-                        <p class="text-sm text-gray-400">
-                            Local-first Kanban board with interactive status
-                            management.
-                        </p>
-                    </div>
-                    <div class="space-y-2 border-l-0 sm:border-l border-gray-800 pl-0 sm:pl-8">
-                        <div
-                            class="text-xs font-mono text-gray-500 uppercase tracking-widest font-bold"
-                        >
-                            Coming Soon
-                        </div>
-                        <h3 class="font-bold text-[#EDEDED]">Chisel Observe</h3>
-                        <p class="text-sm text-gray-400">
-                            TUI-based observability for Docker, K8s, and
-                            CloudWatch logs.
+                            Permanent knowledge base with 3-pane TUI explorer,
+                            SQLite full-text search, and structured machine mode output.
                         </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Product Sections -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-32">
+        <!-- Product Detail Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32">
+            <div class="space-y-6">
+                <h3 class="text-2xl font-bold text-[#EDEDED]">Chisel Specs</h3>
+                <p class="text-gray-400 leading-relaxed">
+                    The artifact that lives between an idea and a shipped feature.
+                    Captures intent, constraints, alternatives, and implementation
+                    notes. Structured for both humans and LLM agents.
+                </p>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
+                        >Lifecycle</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
+                        >Machine Mode</span
+                    >
+                    <span
+                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
+                        >Templates</span
+                    >
+                </div>
+            </div>
             <div class="space-y-6">
                 <h3 class="text-2xl font-bold text-[#EDEDED]">Chisel Docs</h3>
                 <p class="text-gray-400 leading-relaxed">
                     A knowledge base that understands structure. Markdown-first.
-                    Local SQLite index. AI-ready schemas.
+                    Local SQLite index. AI-ready schemas. Your permanent project memory.
                 </p>
                 <div class="flex flex-wrap gap-2 pt-2">
                     <span
@@ -222,56 +249,12 @@ const version = import.meta.env.CHISEL_VERSION;
                     >
                 </div>
             </div>
-            <div class="space-y-6">
-                <h3 class="text-2xl font-bold text-[#EDEDED]">Chisel Issues</h3>
-                <p class="text-gray-400 leading-relaxed">
-                    A text-first issue tracker for engineering teams. Local
-                    files, clean TUI board, agent-friendly APIs.
-                </p>
-                <div class="flex flex-wrap gap-2 pt-2">
-                    <span
-                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
-                        >Kanban TUI</span
-                    >
-                    <span
-                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
-                        >Local-First</span
-                    >
-                    <span
-                        class="text-[10px] px-2 py-0.5 bg-[#BB6BD9]/10 border border-[#BB6BD9]/20 rounded text-[#BB6BD9] uppercase font-bold tracking-widest"
-                        >Extensible</span
-                    >
-                </div>
-            </div>
-            <div class="space-y-6 opacity-60">
-                <h3 class="text-2xl font-bold text-[#EDEDED]">
-                    Chisel Observe (Planned)
-                </h3>
-                <p class="text-gray-400 leading-relaxed">
-                    Observability without dashboards. Logs, metrics, and traces
-                    in a fast, expressive TUI.
-                </p>
-                <div class="flex flex-wrap gap-2 pt-2">
-                    <span
-                        class="text-[10px] px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-green-400 uppercase font-bold tracking-widest"
-                        >Docker</span
-                    >
-                    <span
-                        class="text-[10px] px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-green-400 uppercase font-bold tracking-widest"
-                        >K8s</span
-                    >
-                    <span
-                        class="text-[10px] px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-green-400 uppercase font-bold tracking-widest"
-                        >CloudWatch</span
-                    >
-                </div>
-            </div>
         </section>
 
-        <!-- Why Chisel Section -->
+        <!-- Comparison: Without vs With -->
         <section class="mb-32">
             <h2 class="text-3xl font-bold text-center mb-16 text-[#EDEDED]">
-                Why use Chisel?
+                Without Chisel vs. With Chisel
             </h2>
 
             <!-- Desktop Table -->
@@ -283,62 +266,63 @@ const version = import.meta.env.CHISEL_VERSION;
                         <tr class="bg-[#1A1A1A]">
                             <th
                                 class="p-4 font-bold text-[#EDEDED] border-b border-gray-800"
-                                >Feature</th
+                                ></th
                             >
                             <th
-                                class="p-4 font-bold text-[#EDEDED] border-b border-gray-800"
-                                >Legacy Tools</th
+                                class="p-4 font-bold text-gray-500 border-b border-gray-800"
+                                >Without Chisel</th
                             >
                             <th
                                 class="p-4 font-bold text-blue-400 border-b border-gray-800"
-                                >Chisel</th
+                                >With Chisel</th
                             >
                         </tr>
                     </thead>
                     <tbody class="text-gray-400">
                         <tr class="border-b border-gray-900 hover:bg-[#0D0D0D]">
                             <td class="p-4 border-r border-gray-900 font-medium"
-                                >Interface</td
+                                >Decision memory</td
                             >
                             <td class="p-4 border-r border-gray-900"
-                                >Heavy Web Apps / Clicks</td
+                                >Lost in Slack threads and closed PRs</td
                             >
                             <td class="p-4 font-bold text-[#EDEDED]"
-                                >Terminal / 10ms Latency</td
+                                >Preserved in versioned specs alongside code</td
                             >
                         </tr>
                         <tr class="border-b border-gray-900 hover:bg-[#0D0D0D]">
                             <td class="p-4 border-r border-gray-900 font-medium"
-                                >Data Storage</td
+                                >Agent context</td
                             >
                             <td class="p-4 border-r border-gray-900"
-                                >Cloud-Only / Proprietary</td
+                                >Every session starts from scratch</td
                             >
                             <td class="p-4 font-bold text-[#EDEDED]"
-                                >Local-First Markdown/YAML</td
+                                >One command generates structured context</td
                             >
                         </tr>
                         <tr class="border-b border-gray-900 hover:bg-[#0D0D0D]">
                             <td class="p-4 border-r border-gray-900 font-medium"
-                                >LLM Access</td
+                                >Spec lifecycle</td
                             >
                             <td class="p-4 border-r border-gray-900"
-                                >Screen Scraping / Manual Paste</td
+                                >Google Docs that go stale after shipping</td
                             >
                             <td class="p-4 font-bold text-[#EDEDED]"
-                                >Structured Machine Mode</td
+                                >Draft &rarr; ready &rarr; in-progress &rarr; shipped &rarr; archived</td
                             >
                         </tr>
                         <tr class="hover:bg-[#0D0D0D]">
                             <td class="p-4 border-r border-gray-900 font-medium"
-                                >Licensing</td
+                                >Knowledge retrieval</td
                             >
                             <td class="p-4 border-r border-gray-900"
-                                >SaaS / Subscription</td
+                                >Manual copy-paste from wikis</td
                             >
-                                    <td class="p-4 font-bold text-[#EDEDED]"
-                                        >FSL-1.1</td
-                                    >                        </tr>
+                            <td class="p-4 font-bold text-[#EDEDED]"
+                                >Full-text search with machine mode output</td
+                            >
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -348,24 +332,24 @@ const version = import.meta.env.CHISEL_VERSION;
                 {
                     [
                         {
-                            feature: "Interface",
-                            legacy: "Heavy Web Apps / Clicks",
-                            chisel: "Terminal / 10ms Latency",
+                            feature: "Decision Memory",
+                            without: "Lost in Slack threads and closed PRs",
+                            chisel: "Preserved in versioned specs alongside code",
                         },
                         {
-                            feature: "Data Storage",
-                            legacy: "Cloud-Only / Proprietary",
-                            chisel: "Local-First Markdown/YAML",
+                            feature: "Agent Context",
+                            without: "Every session starts from scratch",
+                            chisel: "One command generates structured context",
                         },
                         {
-                            feature: "LLM Access",
-                            legacy: "Screen Scraping / Manual Paste",
-                            chisel: "Structured Machine Mode",
+                            feature: "Spec Lifecycle",
+                            without: "Google Docs that go stale after shipping",
+                            chisel: "Draft \u2192 ready \u2192 in-progress \u2192 shipped",
                         },
                         {
-                            feature: "Licensing",
-                            legacy: "SaaS / Subscription",
-                            chisel: "FSL-1.1",
+                            feature: "Knowledge Retrieval",
+                            without: "Manual copy-paste from wikis",
+                            chisel: "Full-text search with machine mode output",
                         },
                     ].map((item) => (
                         <div class="bg-[#050505] border border-gray-800 rounded-xl p-6 space-y-4">
@@ -375,15 +359,15 @@ const version = import.meta.env.CHISEL_VERSION;
                             <div class="grid grid-cols-2 gap-4 pt-2">
                                 <div class="space-y-1">
                                     <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
-                                        Legacy
+                                        Without
                                     </div>
                                     <div class="text-sm text-gray-400">
-                                        {item.legacy}
+                                        {item.without}
                                     </div>
                                 </div>
                                 <div class="space-y-1 border-l border-gray-900 pl-4">
                                     <div class="text-[10px] text-[#EDEDED] uppercase font-bold tracking-tighter">
-                                        Chisel
+                                        With Chisel
                                     </div>
                                     <div class="text-sm text-[#EDEDED] font-bold">
                                         {item.chisel}
@@ -406,13 +390,14 @@ const version = import.meta.env.CHISEL_VERSION;
             <div class="max-w-2xl mx-auto text-center mb-16 space-y-4">
                 <p class="text-gray-400 font-mono text-sm">
                     Every Chisel tool supports a mode optimized for LLM context
-                    windows and parsing.
+                    windows and parsing. Works with Claude Code, Cursor, Aider,
+                    and any shell-capable agent.
                 </p>
                 <div
                     class="inline-block px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-300 font-mono"
                 >
-                    <b class="text-[#4DA3FF]">Token-Dense:</b> Prunes human metadata,
-                    optimizes for context limits, and uses LLM-friendly schemas.
+                    <b class="text-[#4DA3FF]">BYOLLM:</b> Chisel structures your knowledge.
+                    You bring the model.
                 </div>
             </div>
 
@@ -451,35 +436,35 @@ const version = import.meta.env.CHISEL_VERSION;
                     </DualModeVideo>
                 </div>
 
-                <!-- Issues Example -->
+                <!-- Workflow Example -->
                 <div class="space-y-6">
                     <div class="flex items-center gap-4">
                         <div class="h-px flex-grow bg-gray-900"></div>
                         <h3
                             class="text-sm font-mono text-gray-400 uppercase tracking-widest"
                         >
-                            Chisel Issues
+                            The Workflow
                         </h3>
                         <div class="h-px flex-grow bg-gray-900"></div>
                     </div>
 
-                    <DualModeVideo
-                        client:load
-                        humanTitle="chisel issues"
-                        machineTitle="chisel issues — machine"
-                        humanVideo="/assets/issues_human.webm"
-                        machineVideo="/assets/issues_machine.webm"
-                    >
-                        <div
-                            slot="humanFooter"
-                            class="flex gap-4 text-gray-400 text-[10px] font-mono"
-                        >
-                            <span><b class="text-[#EDEDED]">m</b>:status</span>
-                            <span><b class="text-[#EDEDED]">t</b>:title</span>
-                            <span><b class="text-[#EDEDED]">p</b>:prio</span>
-                            <span class="ml-auto text-gray-400">G:bottom</span>
+                    <div class="bg-[#050505] border border-gray-800 rounded-xl p-8 space-y-6 font-mono text-sm">
+                        <div class="space-y-2">
+                            <div class="text-gray-500"># Write a spec for your next feature</div>
+                            <div><span class="text-[#4DA3FF]">$</span> chisel spec new "user authentication"</div>
                         </div>
-                    </DualModeVideo>
+                        <div class="space-y-2">
+                            <div class="text-gray-500"># Implement with your LLM agent</div>
+                            <div><span class="text-[#4DA3FF]">$</span> chisel context create "auth" | claude -p "implement this"</div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="text-gray-500"># Mark shipped when done</div>
+                            <div><span class="text-[#4DA3FF]">$</span> chisel spec status user-auth shipped</div>
+                        </div>
+                        <div class="text-gray-500 text-xs pt-2 border-t border-gray-900">
+                            The spec now reflects what actually shipped. Six months later, you or your agent can find it.
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -515,8 +500,8 @@ const version = import.meta.env.CHISEL_VERSION;
                         03. License
                     </div>
                     <p class="text-gray-400 text-sm leading-relaxed">
-                        Chisel is <b class="text-[#EDEDED]">FSL-1.1</b>. 
-                        Free for non-competing use and converts to Apache 2.0 
+                        Chisel is <b class="text-[#EDEDED]">FSL-1.1</b>.
+                        Free for non-competing use and converts to Apache 2.0
                         after 2 years.
                     </p>
                 </div>
@@ -536,11 +521,11 @@ const version = import.meta.env.CHISEL_VERSION;
         <!-- Call to Action -->
         <section class="text-center py-20 border-t border-gray-900">
             <h2 class="text-4xl font-bold mb-8 text-[#EDEDED]">
-                Start shaping your workflow.
+                Start staying the architect.
             </h2>
             <p class="text-xl text-gray-300 mb-12">
-                Chisel is in active development. Try the alpha today and help shape
-                the future of text-first tools.
+                Chisel is in active development. Try the alpha today and keep your
+                project's reasoning intact as it scales.
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -558,7 +543,7 @@ const version = import.meta.env.CHISEL_VERSION;
                 </a>
             </div>
             <p class="text-gray-500 font-mono text-xs mt-12">
-                v{version}-alpha • FSL-1.1-Apache-2.0 Licensed
+                v{version}-alpha &bull; FSL-1.1-Apache-2.0 Licensed
             </p>
         </section>
     </main>
@@ -566,6 +551,6 @@ const version = import.meta.env.CHISEL_VERSION;
     <footer
         class="py-12 border-t border-gray-900 text-center text-gray-400 text-sm"
     >
-        <p>© 2026 Chisel Tools. Built for humans and LLMs.</p>
+        <p>&copy; 2026 Chisel Tools. The project brain for builders.</p>
     </footer>
 </Layout>

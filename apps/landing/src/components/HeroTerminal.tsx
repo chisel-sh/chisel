@@ -3,66 +3,86 @@ import { TerminalDemo, type DemoStep } from './TerminalDemo';
 
 const HERO_DEMOS: DemoStep[] = [
   {
-    command: "chisel docs list",
+    command: "chisel init",
     output: (
       <pre className="font-mono leading-tight whitespace-pre">
-        {`┌─────────────────────────────── DOCUMENTS ────────────────────────────────────┐
-│ 42 documents found                                                           │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ `}<span className="text-[#4DA3FF]">▸</span>{` embeddings.md                  AI/ML           updated 12m ago             │
-│   rag_pipeline.md                RAG             updated 2h ago              │
-│   architecture/overview.md       SYSTEM          updated 1d ago              │
+        {`Initializing Chisel workspace for: my-saas-app...
+Success! Chisel is ready.
+
+`}<span className="text-gray-500">{`  .chisel/docs/         `}</span>{`Markdown knowledge base
+`}<span className="text-gray-500">{`  specs/active/         `}</span>{`Draft and in-progress specs
+`}<span className="text-gray-500">{`  specs/shipped/        `}</span>{`Completed specs
+`}<span className="text-gray-500">{`  specs/archived/       `}</span>{`Superseded specs
+
+`}<span className="text-[#6EEB83]">{`Try running \`chisel docs\` or \`chisel spec\` to begin.`}</span>
+      </pre>
+    )
+  },
+  {
+    command: 'chisel spec new "user authentication"',
+    output: (
+      <pre className="font-mono leading-tight whitespace-pre">
+        {`Created spec: User Authentication (user-authentication)
+  → specs/active/user-authentication.md
+
+`}<span className="text-gray-500">{`---
+title: User Authentication
+status: draft
+created: 2026-03-28
+area: auth
+---`}</span>{`
+
+## What and Why
+## Success Criteria
+## Approach
+## Open Questions`}
+      </pre>
+    )
+  },
+  {
+    command: "chisel spec list",
+    output: (
+      <pre className="font-mono leading-tight whitespace-pre">
+        {`┌─────────────────────────────────── SPECS ────────────────────────────────────┐
+│ `}<span className="text-gray-500">○</span>{` User Authentication          `}<span className="text-gray-500">draft</span>{`          auth                      │
+│ `}<span className="text-[#F2C94C]">◉</span>{` Payment Flow                 `}<span className="text-[#F2C94C]">in-progress</span>{`    payments                  │
+│ `}<span className="text-[#6EEB83]">●</span>{` Onboarding V1                `}<span className="text-[#6EEB83]">shipped</span>{`        onboarding               │
 └──────────────────────────────────────────────────────────────────────────────┘`}
       </pre>
     )
   },
   {
-    command: "chisel observe logs --since 5m",
-    output: (
-      <pre className="font-mono leading-tight whitespace-pre">
-        {`┌─────────────────────────────── LOGS (last 5m) ───────────────────────────────┐
-│ 12:04:22  `}<span className="text-[#EB5757]">ERROR</span>{`  db_timeout   Query exceeded 2000ms                          │
-│ 12:04:23  `}<span className="text-[#EB5757]">ERROR</span>{`  auth_fail    Invalid token from 10.0.2.14                   │
-│ 12:04:45  `}<span className="text-[#F2C94C]">WARN</span>{`   auth_retry   Retrying login for 10.0.2.14                   │
-│ 12:05:10  `}<span className="text-[#6EEB83]">INFO</span>{`   auth_success User 42 logged in successfully                 │
-│ 12:05:12  `}<span className="text-[#6EEB83]">INFO</span>{`   db_query     SELECT * FROM documents                        │
-└──────────────────────────────────────────────────────────────────────────────┘`}
-      </pre>
-    )
-  },
-  {
-    command: "chisel issues list",
-    output: (
-      <pre className="font-mono leading-tight whitespace-pre">
-        {`┌───────────────────────────────── ISSUES ─────────────────────────────────────┐
-│ TODO (3)                     IN PROGRESS (2)                 DONE (1)        │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ `}<span className="text-[#4DA3FF]">▸</span>{` #42 Add embeddings guide   #51 Improve search perf         #12 Fix typos   │
-│   #15 Fix auth leak          #48 TUI alignment fix                           │
-│   #55 Netlify forms setup                                                    │
-└──────────────────────────────────────────────────────────────────────────────┘`}
-      </pre>
-    )
-  },
-  {
-    command: "chisel docs summarize embeddings.md --machine",
+    command: "chisel --machine spec view payment-flow",
     output: (
       <pre className="font-mono leading-tight whitespace-pre text-gray-400">
-        {`SUMMARY:
-- Converts text to vectors
-- Enables semantic search
-- Required for RAG`}
+        {`slug: payment-flow
+title: Payment Flow
+status: in-progress
+area: payments
+created: '2026-03-15'
+updated: '2026-03-27'
+open_questions:
+  - Support Stripe + PayPal or Stripe only?
+content: |
+  ## What and Why
+  Integrate payment processing...`}
       </pre>
     )
   },
   {
-    command: "chisel observe summarize --window 5m --machine",
+    command: 'chisel context create "payments"',
     output: (
       <pre className="font-mono leading-tight whitespace-pre text-gray-400">
-        {`SUMMARY:
-- DB latency spikes (avg 2.1s)
-- Repeated auth failures from 10.0.2.14
-- Cache miss rate 18%`}
+        {`<context>
+  <spec path="specs/active/payment-flow.md">
+    ## What and Why
+    Integrate payment processing for subscriptions...
+  </spec>
+  <file path="docs/architecture.md">
+    ## Payment Architecture
+    Stripe API integration via webhooks...
+  </file>
+</context>`}
       </pre>
     )
   }
@@ -79,5 +99,5 @@ export const HeroTerminal: React.FC = () => {
     </div>
   );
 
-  return <TerminalDemo steps={HERO_DEMOS} title="chisel — main_demo" footer={footer} />;
+  return <TerminalDemo steps={HERO_DEMOS} title="chisel — demo" footer={footer} />;
 };

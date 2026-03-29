@@ -24,4 +24,4 @@ When you run `chisel init`, a `PROMPT.md` file is created in your `.chisel/` dir
 Include the content of `.chisel/PROMPT.md` in your AI agent's "System Instructions" or "Custom Instructions" to bootstrap its awareness of your knowledge base.
 
 ## Structured Schemas
-The machine mode uses stable, predictable keys. This allows you to build reliable scripts that automate issue triage, documentation auditing, or status reporting without worrying about UI changes.
+The machine mode uses stable, predictable keys. This allows you to build reliable scripts that automate spec triage, documentation auditing, or status reporting without worrying about UI changes.

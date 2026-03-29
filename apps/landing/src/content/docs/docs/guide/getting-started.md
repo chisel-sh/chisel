@@ -23,7 +23,7 @@ Navigate to any project (e.g., a Rust repo, a web app, or a folder of notes) and
 chisel init
 ```
 
-This command creates a `.chisel/` directory and populates it with some helpful onboarding documentation and initial tasks.
+This command creates a `.chisel/` directory and `specs/` directory, and populates them with helpful onboarding documentation and an initial spec.
 
 ## Exploration
 
@@ -33,12 +33,13 @@ chisel docs
 ```
 Use `j`/`k` to navigate and `Tab` to switch between categories and the preview pane.
 
-### 2. Open the Issue Board
+### 2. View Your Specs
 ```bash
-chisel issues
+chisel spec list
 ```
-Move an issue from `Todo` to `In Progress` by pressing `m`.
+Create a new spec with `chisel spec new` or move one through its lifecycle with `chisel spec status`.
 
 ## Next Steps
 - Learn how to [organize your knowledge](./working-with-docs.md).
+- Learn how to [work with specs](./working-with-specs.md).
 - Integrate Chisel with [AI agents](./ai-integration.md).

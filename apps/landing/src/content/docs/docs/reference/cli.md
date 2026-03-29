@@ -19,7 +19,7 @@ Chisel is a suite of terminal-native tools. All commands support a `--machine` f
 ### `chisel init`
 Initialize a new Chisel workspace in the current directory.
 - Creates `.chisel/` directory.
-- Sets up default documentation and issue tracking.
+- Sets up default documentation and spec tracking.
 - Generates `PROMPT.md` for AI agents.
 
 ### `chisel docs`
@@ -32,11 +32,13 @@ Manage your project's knowledge base.
 - `chisel docs new`: Create a new document.
 - `chisel docs edit <path>`: Open a document in your `$EDITOR`.
 
-### `chisel issues`
-Manage your project's tasks.
-- `chisel issues overview`: Show issues by status.
-- `chisel issues list`: List available issues (filter by `--status`).
-- `chisel issues show <id>`: Show issue details.
-- `chisel issues new`: Create a new issue.
-- `chisel issues edit <id>`: Open an issue in your `$EDITOR`.
-- `chisel issues close <id>`: Mark an issue as closed.
+### `chisel spec`
+Manage your project's specs.
+- `chisel spec list`: List specs (filter by `--status`).
+- `chisel spec view <id>`: Show spec details.
+- `chisel spec new`: Create a new spec (supports `--template`).
+- `chisel spec edit <id>`: Open a spec in your `$EDITOR`.
+- `chisel spec status <id> <status>`: Change a spec's lifecycle status.
+- `chisel spec search <query>`: Full-text search across specs.
+- `chisel spec delete <id>`: Remove a spec.
+- `chisel spec index`: Rebuild the spec search index.

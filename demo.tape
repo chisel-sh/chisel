@@ -12,7 +12,7 @@ Set Theme "Catppuccin Mocha"
 
 # Setup (Hidden)
 Hide
-Type "rm -rf .chisel"
+Type "rm -rf .chisel specs"
 Enter
 Type "chisel init --name 'Chisel Preview'"
 Enter
@@ -43,28 +43,24 @@ Sleep 1s
 Type "q"
 Sleep 500ms
 
-# 2. Explore Issues (Kanban)
-Type "chisel issues"
+# 2. Explore Specs
+Type "chisel spec"
 Sleep 500ms
 Enter
 Sleep 1.5s
 
-# Move Issue Status
+# Navigate specs
 Type "j"
 Sleep 200ms
-Type "m"
+Type "j"
 Sleep 500ms
-Down
-Sleep 200ms
-Enter
-Sleep 1s
 
 # Back to shell
 Type "q"
 Sleep 500ms
 
 # 3. Machine Mode Output
-Type "chisel issues list --machine"
+Type "chisel --machine spec list"
 Sleep 500ms
 Enter
 Sleep 3s

@@ -26,5 +26,5 @@ We welcome contributions of all kinds: bug fixes, feature requests, documentatio
 - **Clippy**: Run `cargo clippy` to catch common mistakes.
 - **Documentation**: If you add a feature, please add a corresponding doc in `.chisel/docs/`.
 
-## Issues
-We use Chisel to manage Chisel! You can find our current roadmap and bugs by running `chisel issues` in the root of this repository.
+## Specs
+We use Chisel to manage Chisel! You can find our current roadmap and specs by running `chisel spec list` in the root of this repository.

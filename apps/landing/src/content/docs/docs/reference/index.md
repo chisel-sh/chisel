@@ -10,4 +10,4 @@ Technical details and command references for the Chisel suite.
 
 - [CLI Reference](./cli.md): Command-line flags and subcommands.
 - [Docs Reference](./docs.md): Documentation structure, frontmatter, and TUI shortcuts.
-- [Issues Reference](./issues.md): Issue tracker schema, status, and Kanban board usage.
+- [Specs Reference](./specs.md): Spec lifecycle, frontmatter schema, and CLI commands.

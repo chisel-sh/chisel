@@ -21,7 +21,7 @@ Automatically managed by Chisel.
 ### GUIDE
 - [ai-integration](guide/ai-integration)
 - [getting-started](guide/getting-started)
-- [managing-issues](guide/managing-issues)
+- [working-with-specs](guide/working-with-specs)
 - [working-with-docs](guide/working-with-docs)
 
 ### INTEGRATIONS
@@ -35,7 +35,7 @@ Automatically managed by Chisel.
 - [index](reference/index)
 - [cli](reference/cli)
 - [docs](reference/docs)
-- [issues](reference/issues)
+- [specs](reference/specs)
 
 ### TUTORIAL
 - [working-with-docs](tutorial/working-with-docs)

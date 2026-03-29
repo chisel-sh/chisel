@@ -21,8 +21,8 @@ hero:
 ### 📖 [Chisel Docs](/docs/reference/docs/)
 A knowledge base that understands structure. Markdown-first, git-backed, and local-first.
 
-### 📋 [Chisel Issues](/docs/reference/issues/)
-A text-first issue tracker. Manage work with local files and a clean TUI board.
+### 📋 [Chisel Specs](/docs/reference/specs/)
+A lifecycle-driven spec tracker. Manage features and decisions as local Markdown files.
 
 ### ⚙️ [CLI Reference](/docs/reference/cli/)
 Comprehensive reference for the `chisel` command-line interface.
