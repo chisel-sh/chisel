@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.1](https://github.com/chisel-sh/chisel/compare/chisel-v0.2.0...chisel-v0.2.1) - 2026-03-29
+
+### Fixed
+
+- default specs directory to .chisel/specs/ instead of project root
+
 ## [0.2.0](https://github.com/chisel-sh/chisel/compare/chisel-v0.1.8...chisel-v0.2.0) - 2026-03-29
 
 ### Added
