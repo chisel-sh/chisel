@@ -10,9 +10,9 @@ const HERO_DEMOS: DemoStep[] = [
 Success! Chisel is ready.
 
 `}<span className="text-gray-500">{`  .chisel/docs/         `}</span>{`Markdown knowledge base
-`}<span className="text-gray-500">{`  specs/active/         `}</span>{`Draft and in-progress specs
-`}<span className="text-gray-500">{`  specs/shipped/        `}</span>{`Completed specs
-`}<span className="text-gray-500">{`  specs/archived/       `}</span>{`Superseded specs
+`}<span className="text-gray-500">{`  .chisel/specs/active/         `}</span>{`Draft and in-progress specs
+`}<span className="text-gray-500">{`  .chisel/specs/shipped/        `}</span>{`Completed specs
+`}<span className="text-gray-500">{`  .chisel/specs/archived/       `}</span>{`Superseded specs
 
 `}<span className="text-[#6EEB83]">{`Try running \`chisel docs\` or \`chisel spec\` to begin.`}</span>
       </pre>
@@ -23,7 +23,7 @@ Success! Chisel is ready.
     output: (
       <pre className="font-mono leading-tight whitespace-pre">
         {`Created spec: User Authentication (user-authentication)
-  → specs/active/user-authentication.md
+  → .chisel/specs/active/user-authentication.md
 
 `}<span className="text-gray-500">{`---
 title: User Authentication
@@ -74,7 +74,7 @@ content: |
     output: (
       <pre className="font-mono leading-tight whitespace-pre text-gray-400">
         {`<context>
-  <spec path="specs/active/payment-flow.md">
+  <spec path=".chisel/specs/active/payment-flow.md">
     ## What and Why
     Integrate payment processing for subscriptions...
   </spec>

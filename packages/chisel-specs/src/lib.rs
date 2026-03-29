@@ -245,7 +245,7 @@ impl SpecsService {
             .as_ref()
             .and_then(|s| s.source.clone())
             .map(|s| project_root.join(s))
-            .unwrap_or_else(|| project_root.join("specs"));
+            .unwrap_or_else(|| project_root.join(".chisel").join("specs"));
 
         let source = Box::new(DefaultSpecSource::new(specs_dir));
         Ok(Self {
@@ -545,8 +545,8 @@ mod tests {
         assert!(shipped.path.to_string_lossy().contains("shipped"));
 
         // Old path should not exist
-        assert!(!root.join("specs/active/user-auth.md").exists());
-        assert!(root.join("specs/shipped/user-auth.md").exists());
+        assert!(!root.join(".chisel/specs/active/user-auth.md").exists());
+        assert!(root.join(".chisel/specs/shipped/user-auth.md").exists());
 
         // Delete
         service.delete("user-auth").await.unwrap();

@@ -8,12 +8,12 @@ tags: [concepts, fundamentals]
 Understanding how Chisel structures information will help you get the most out of the tool suite.
 
 ## The .chisel Workspace
-Every Chisel project revolves around the `.chisel/` directory and the `specs/` directory. This is where your knowledge base and specs live. Keeping this data in your repo ensures it follows your code's lifecycle (branches, reverts, and history).
+Every Chisel project revolves around the `.chisel/` directory. This is where your knowledge base and specs live. Keeping this data in your repo ensures it follows your code's lifecycle (branches, reverts, and history).
 
 ## Text-as-Source-of-Truth
 Unlike tools that hide your data in a database, Chisel uses standard files:
 - **Docs**: Nested Markdown files in `.chisel/docs/`.
-- **Specs**: Lifecycle-driven Markdown files in `specs/{active,shipped,archived}/`.
+- **Specs**: Lifecycle-driven Markdown files in `.chisel/specs/{active,shipped,archived}/`.
 
 ## The Hybrid Engine
 While the source of truth is text, Chisel maintains a local **SQLite FTS5** index (`.chisel/index.db`).

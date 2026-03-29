@@ -312,7 +312,7 @@ mod tests {
         store
             .update_spec(UpdateSpecParams {
                 slug: "user-auth",
-                path: "specs/active/user-auth.md",
+                path: ".chisel/specs/active/user-auth.md",
                 title: "User Auth",
                 status: "draft",
                 area: Some("auth"),
@@ -331,7 +331,7 @@ mod tests {
         store
             .update_spec(UpdateSpecParams {
                 slug: "user-auth",
-                path: "specs/active/user-auth.md",
+                path: ".chisel/specs/active/user-auth.md",
                 title: "User Auth",
                 status: "in-progress",
                 area: Some("auth"),
@@ -427,7 +427,7 @@ mod tests {
         store
             .update_spec(UpdateSpecParams {
                 slug: "routing-fix",
-                path: "specs/active/routing-fix.md",
+                path: ".chisel/specs/active/routing-fix.md",
                 title: "Routing Fix",
                 status: "in-progress",
                 area: Some("infra"),
@@ -448,7 +448,7 @@ mod tests {
         assert!(doc.content.contains("relevant context"));
 
         let spec = results.iter().find(|i| i.r#type == "spec").unwrap();
-        assert_eq!(spec.path, "specs/active/routing-fix.md");
+        assert_eq!(spec.path, ".chisel/specs/active/routing-fix.md");
         assert!(spec.content.contains("fix the routing bug"));
     }
 }

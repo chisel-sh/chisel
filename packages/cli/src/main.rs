@@ -500,7 +500,7 @@ async fn init_workspace(
     // 4. Generate AI Agent Prompt
     let prompt_path = chisel_dir.join("PROMPT.md");
     let prompt_content = format!(
-        "# Chisel Project: {}\n\nThis project uses Chisel for documentation and specs.\n\n## Structure\n- Docs: `.chisel/docs/` (Markdown)\n- Specs: `specs/` (Markdown with YAML frontmatter, organized by lifecycle)\n  - `specs/active/` — drafts, ready, and in-progress specs\n  - `specs/shipped/` — completed specs\n  - `specs/archived/` — superseded or abandoned specs\n\n## Guidelines\nWhen performing tasks in this repo, you can use `chisel docs` and `chisel spec` with the `--machine` flag to inspect and update the project state efficiently.\n\nUse `chisel context create <query>` to gather relevant docs and specs as structured context.",
+        "# Chisel Project: {}\n\nThis project uses Chisel for documentation and specs.\n\n## Structure\n- Docs: `.chisel/docs/` (Markdown)\n- Specs: `.chisel/specs/` (Markdown with YAML frontmatter, organized by lifecycle)\n  - `.chisel/specs/active/` — drafts, ready, and in-progress specs\n  - `.chisel/specs/shipped/` — completed specs\n  - `.chisel/specs/archived/` — superseded or abandoned specs\n\n## Guidelines\nWhen performing tasks in this repo, you can use `chisel docs` and `chisel spec` with the `--machine` flag to inspect and update the project state efficiently.\n\nUse `chisel context create <query>` to gather relevant docs and specs as structured context.",
         project_name
     );
     std::fs::write(&prompt_path, prompt_content)?;
@@ -586,9 +586,9 @@ mod tests {
         assert!(root
             .join(".chisel/docs/tutorial/working-with-docs.md")
             .exists());
-        assert!(root.join("specs/active").exists());
-        assert!(root.join("specs/shipped").exists());
-        assert!(root.join("specs/archived").exists());
+        assert!(root.join(".chisel/specs/active").exists());
+        assert!(root.join(".chisel/specs/shipped").exists());
+        assert!(root.join(".chisel/specs/archived").exists());
         assert!(root.join(".chisel/PROMPT.md").exists());
         assert!(root.join(".gitignore").exists());
 
@@ -608,7 +608,7 @@ mod tests {
                 r#type: "document".to_string(),
             },
             ContextItem {
-                path: "specs/active/auth.md".to_string(),
+                path: ".chisel/specs/active/auth.md".to_string(),
                 content: "Spec content".to_string(),
                 r#type: "spec".to_string(),
             },
@@ -620,7 +620,7 @@ mod tests {
         assert!(output.contains("<file path=\"path/to/doc.md\">"));
         assert!(output.contains("# Title\nContent"));
         assert!(output.contains("</file>"));
-        assert!(output.contains("<spec path=\"specs/active/auth.md\">"));
+        assert!(output.contains("<spec path=\".chisel/specs/active/auth.md\">"));
         assert!(output.contains("Spec content"));
         assert!(output.contains("</spec>"));
         assert!(output.contains("</context>"));

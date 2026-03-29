@@ -14,7 +14,7 @@ Chisel Specs is a lifecycle-driven spec tracker stored as local Markdown files.
 Specs are organized by lifecycle state:
 
 ```
-specs/
+.chisel/specs/
 ├── active/       # Draft, Ready, and InProgress specs
 ├── shipped/      # Completed specs
 └── archived/     # Historical specs

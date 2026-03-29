@@ -20,7 +20,7 @@ Defined in `packages/chisel-docs/src/source.rs`. Any implementation can power th
 ## SpecSource Trait (Specs)
 Defined in `packages/chisel-specs/src/source.rs`.
 
-- **`DefaultSpecSource`**: Manages local Markdown specs in `specs/{active,shipped,archived}/`.
+- **`DefaultSpecSource`**: Manages local Markdown specs in `.chisel/specs/{active,shipped,archived}/`.
 - **Future Adapters**: Potential implementations for `GitHubSpecSource` or `LinearSource`.
 
 ## Why this matters

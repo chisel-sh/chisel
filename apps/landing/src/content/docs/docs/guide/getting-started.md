@@ -23,7 +23,7 @@ Navigate to any project (e.g., a Rust repo, a web app, or a folder of notes) and
 chisel init
 ```
 
-This command creates a `.chisel/` directory and `specs/` directory, and populates them with helpful onboarding documentation and an initial spec.
+This command creates a `.chisel/` directory with docs and specs subdirectories, and populates them with helpful onboarding documentation and an initial spec.
 
 ## Exploration
 

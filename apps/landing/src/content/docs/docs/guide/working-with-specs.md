@@ -15,7 +15,7 @@ Chisel Specs provides a lifecycle-driven workflow for tracking features, archite
 chisel spec new
 ```
 
-You will be prompted for a title and template. Chisel creates a new Markdown file in `specs/active/` with the appropriate frontmatter.
+You will be prompted for a title and template. Chisel creates a new Markdown file in `.chisel/specs/active/` with the appropriate frontmatter.
 
 ### Templates
 
@@ -50,7 +50,7 @@ chisel spec status 0001 in-progress
 chisel spec status 0001 shipped
 ```
 
-When a spec moves to `shipped`, Chisel relocates its file from `specs/active/` to `specs/shipped/`. When archived, it moves to `specs/archived/`.
+When a spec moves to `shipped`, Chisel relocates its file from `.chisel/specs/active/` to `.chisel/specs/shipped/`. When archived, it moves to `.chisel/specs/archived/`.
 
 ## Listing and Searching
 
@@ -72,7 +72,7 @@ chisel spec list --machine
 ## Directory Structure
 
 ```
-specs/
+.chisel/specs/
 ├── active/          # Draft, Ready, and InProgress specs
 │   ├── 0001_user-auth-flow.md
 │   └── 0002_api-rate-limiting.md
