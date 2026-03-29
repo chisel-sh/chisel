@@ -6,6 +6,10 @@
 semver_check = true
 # release-plz uses Conventional Commits by default.
 
+# Let release-plz create git tags but NOT GitHub Releases.
+# cargo-dist (release.yml) handles GitHub Release creation with binary artifacts.
+git_release_enable = false
+
 [[package]]
 name = "chisel"
 publish = false
