@@ -1,6 +1,35 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.0](https://github.com/chisel-sh/chisel/compare/chisel-v0.2.1...chisel-v0.3.0) - 2026-03-29
+
+### Added
+
+- [**breaking**] replace issues with specs primitive and refocus marketing ([#24](https://github.com/chisel-sh/chisel/pull/24))
+- implement 'context create' command for LLM context generation ([#23](https://github.com/chisel-sh/chisel/pull/23))
+- add upgrade service and update notifications ([#12](https://github.com/chisel-sh/chisel/pull/12))
+
+### Fixed
+
+- default specs directory to .chisel/specs/ instead of project root
+- improve release triggers and install script for monorepo ([#5](https://github.com/chisel-sh/chisel/pull/5))
+
+### Other
+
+- release v0.3.0 ([#25](https://github.com/chisel-sh/chisel/pull/25))
+- release v0.1.9 ([#22](https://github.com/chisel-sh/chisel/pull/22))
+- release v0.1.8 ([#21](https://github.com/chisel-sh/chisel/pull/21))
+- *(changelog)* clean up and backfill PR entries for v0.1.6 and v0.1.7
+- release v0.1.7 ([#19](https://github.com/chisel-sh/chisel/pull/19))
+- release v0.1.6 ([#14](https://github.com/chisel-sh/chisel/pull/14))
+- release v0.1.5 ([#10](https://github.com/chisel-sh/chisel/pull/10))
+- release v0.1.4 ([#8](https://github.com/chisel-sh/chisel/pull/8))
+- release v0.1.3 ([#6](https://github.com/chisel-sh/chisel/pull/6))
+- unify package metadata and enforce FSL license across all packages ([#7](https://github.com/chisel-sh/chisel/pull/7))
+- release v0.1.2 ([#4](https://github.com/chisel-sh/chisel/pull/4))
+- release v0.1.1
+- :rocket: initial commit
+
 ## [0.2.1](https://github.com/chisel-sh/chisel/compare/chisel-v0.2.0...chisel-v0.2.1) - 2026-03-29
 
 ### Fixed
