@@ -1570,9 +1570,5 @@ impl SpecsApp {
 }
 
 fn truncate_str(s: &str, max: usize) -> String {
-    if s.len() > max {
-        format!("{}...", &s[..max.saturating_sub(3)])
-    } else {
-        s.to_string()
-    }
+    chisel_fs::truncate_with_ellipsis(s, max)
 }

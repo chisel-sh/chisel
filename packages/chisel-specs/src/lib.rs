@@ -142,16 +142,8 @@ impl Renderable for SpecList {
         for spec in sorted {
             println!(
                 "{:<25} {:<30} {:<14} {:<10}",
-                if spec.slug.len() > 23 {
-                    format!("{}...", &spec.slug[..20])
-                } else {
-                    spec.slug.clone()
-                },
-                if spec.title.len() > 28 {
-                    format!("{}...", &spec.title[..25])
-                } else {
-                    spec.title.clone()
-                },
+                chisel_fs::truncate_with_ellipsis(&spec.slug, 23),
+                chisel_fs::truncate_with_ellipsis(&spec.title, 28),
                 spec.status,
                 spec.area.as_deref().unwrap_or("-"),
             );
@@ -309,11 +301,7 @@ impl SpecsService {
                 area: s.area,
                 created: s.created,
                 updated: s.updated,
-                excerpt: if s.content.len() > 100 {
-                    format!("{}...", &s.content[..97])
-                } else {
-                    s.content.clone()
-                },
+                excerpt: chisel_fs::truncate_with_ellipsis(&s.content, 100),
             })
             .collect();
 
@@ -551,5 +539,30 @@ mod tests {
         // Delete
         service.delete("user-auth").await.unwrap();
         assert!(service.show("user-auth").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_em_dash_in_title_and_content() {
+        let temp = tempfile::tempdir().unwrap();
+        let service = SpecsService::new(temp.path().to_path_buf()).await.unwrap();
+
+        // Em dashes straddle the truncation cutoffs (title byte 25, excerpt
+        // byte 97) that the old byte-index slicing panicked on.
+        let title = format!("{}\u{2014} and more title text", "x".repeat(24));
+        let content = format!("{}\u{2014}{}", "y".repeat(96), " body tail".repeat(3));
+
+        let spec = service
+            .create(&title, None, None, Some(&content))
+            .await
+            .unwrap();
+        assert_eq!(spec.title, title);
+
+        // Excerpt building (crashes both machine and human modes on old code)
+        let list = service.list(None).await.unwrap();
+        assert_eq!(list.0.len(), 1);
+        assert!(list.0[0].excerpt.ends_with("..."));
+
+        // Human table rendering (title truncation path)
+        list.render_human().unwrap();
     }
 }
