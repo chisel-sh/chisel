@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "chisel"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "chisel-docs",
@@ -246,7 +246,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-docs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-fs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -274,7 +274,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-render"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "ratatui",
@@ -284,7 +284,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-specs"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -303,7 +303,7 @@ dependencies = [
 
 [[package]]
 name = "chisel-store"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "chrono",
