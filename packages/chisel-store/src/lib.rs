@@ -149,6 +149,13 @@ impl Store {
         Ok(rows.into_iter().map(|(p,)| p).collect())
     }
 
+    pub async fn get_spec_slugs(&self) -> Result<Vec<String>> {
+        let rows: Vec<(String,)> = sqlx::query_as("SELECT slug FROM specs")
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(rows.into_iter().map(|(s,)| s).collect())
+    }
+
     pub async fn delete_spec(&self, slug: &str) -> Result<()> {
         sqlx::query("DELETE FROM specs WHERE slug = ?")
             .bind(slug)
