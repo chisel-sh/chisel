@@ -134,6 +134,28 @@ impl Store {
         Ok(())
     }
 
+    pub async fn delete_doc(&self, path: &str) -> Result<()> {
+        sqlx::query("DELETE FROM documents WHERE path = ?")
+            .bind(path)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_doc_paths(&self) -> Result<Vec<String>> {
+        let rows: Vec<(String,)> = sqlx::query_as("SELECT path FROM documents")
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(rows.into_iter().map(|(p,)| p).collect())
+    }
+
+    pub async fn get_spec_slugs(&self) -> Result<Vec<String>> {
+        let rows: Vec<(String,)> = sqlx::query_as("SELECT slug FROM specs")
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(rows.into_iter().map(|(s,)| s).collect())
+    }
+
     pub async fn delete_spec(&self, slug: &str) -> Result<()> {
         sqlx::query("DELETE FROM specs WHERE slug = ?")
             .bind(slug)
@@ -349,6 +371,31 @@ mod tests {
         store.delete_spec("user-auth").await.unwrap();
         let specs = store.get_specs(None).await.unwrap();
         assert_eq!(specs.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_delete_doc() {
+        let store = test_store("delete_doc").await;
+
+        store
+            .update_doc("a.md", "a", Some("Alpha"), None, "alpha content", None)
+            .await
+            .unwrap();
+        store
+            .update_doc("b.md", "b", Some("Beta"), None, "beta content", None)
+            .await
+            .unwrap();
+
+        // Fires the documents_ad FTS trigger, which was malformed before
+        // migration 003 and made any DELETE on documents fail to prepare
+        store.delete_doc("a.md").await.unwrap();
+
+        assert_eq!(store.get_doc_paths().await.unwrap(), vec!["b.md"]);
+
+        let results = store.search_fts::<SearchResult>("alpha").await.unwrap();
+        assert!(results.is_empty());
+        let results = store.search_fts::<SearchResult>("beta").await.unwrap();
+        assert_eq!(results.len(), 1);
     }
 
     #[tokio::test]

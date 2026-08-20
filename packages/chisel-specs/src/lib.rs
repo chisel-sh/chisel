@@ -407,9 +407,24 @@ impl SpecsService {
 
     pub async fn index_all(&self) -> Result<()> {
         let specs = self.source.list(None).await?;
+        let mut indexed_slugs = std::collections::HashSet::new();
         for spec in specs {
+            indexed_slugs.insert(spec.slug.clone());
             let _ = self.index_spec(&spec).await;
         }
+
+        // Prune index rows whose files no longer exist on disk
+        if let Some(store) = &self.store {
+            for stale in store
+                .get_spec_slugs()
+                .await?
+                .into_iter()
+                .filter(|s| !indexed_slugs.contains(s))
+            {
+                store.delete_spec(&stale).await?;
+            }
+        }
+
         Ok(())
     }
 
@@ -539,6 +554,21 @@ mod tests {
         // Delete
         service.delete("user-auth").await.unwrap();
         assert!(service.show("user-auth").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_index_all_prunes_externally_deleted_specs() {
+        let temp = tempfile::tempdir().unwrap();
+        let service = SpecsService::new(temp.path().to_path_buf()).await.unwrap();
+        let store = service.store.as_ref().unwrap();
+
+        let spec = service.create("Ghost", None, None, None).await.unwrap();
+        service.index_all().await.unwrap();
+        assert!(store.get_spec_slugs().await.unwrap().contains(&spec.slug));
+
+        std::fs::remove_file(&spec.path).unwrap();
+        service.index_all().await.unwrap();
+        assert!(store.get_spec_slugs().await.unwrap().is_empty());
     }
 
     #[tokio::test]

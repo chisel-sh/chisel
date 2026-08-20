@@ -172,6 +172,37 @@ mod tests {
         let docs = service.list(ListOptions::default()).await.unwrap();
         assert!(docs.0.iter().any(|d| d.name == "my-new-doc.md"));
     }
+
+    #[tokio::test]
+    async fn test_delete_and_move_prune_index() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().to_path_buf();
+        let service = DocsService::new(root.clone()).await.unwrap();
+        let store = service.store.as_ref().unwrap();
+
+        // Delete removes the file AND its index row
+        let doc = service.create("Doomed Doc", None).await.unwrap();
+        let doc_key = doc.path.to_string_lossy().into_owned();
+        assert!(store.get_doc_paths().await.unwrap().contains(&doc_key));
+
+        service.delete(doc.path.clone()).await.unwrap();
+        assert!(!doc.path.exists());
+        assert!(store.get_doc_paths().await.unwrap().is_empty());
+
+        // Move re-keys the index row instead of leaving a stale duplicate
+        let doc = service.create("Mover", None).await.unwrap();
+        let moved = service
+            .move_doc(doc.path.clone(), Some("archive".to_string()))
+            .await
+            .unwrap();
+        let moved_key = moved.path.to_string_lossy().into_owned();
+        assert_eq!(store.get_doc_paths().await.unwrap(), vec![moved_key.clone()]);
+
+        // index_all prunes rows for files removed outside the service
+        std::fs::remove_file(&moved.path).unwrap();
+        service.index_all().await.unwrap();
+        assert!(!store.get_doc_paths().await.unwrap().contains(&moved_key));
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -447,9 +478,12 @@ impl DocsService {
 
         // Move is a bit special as it involves delete
         self.source.save(&doc).await?;
-        self.source.delete(old_path).await?;
+        self.source.delete(old_path.clone()).await?;
 
         self.index_doc_internal(&doc).await?;
+        if let Some(store) = &self.store {
+            store.delete_doc(&old_path.to_string_lossy()).await?;
+        }
         self.rebuild_index().await?;
 
         Ok(doc)
@@ -489,18 +523,36 @@ impl DocsService {
     }
 
     pub async fn delete(&self, path: PathBuf) -> Result<()> {
-        self.source.delete(path).await?;
+        self.source.delete(path.clone()).await?;
+        if let Some(store) = &self.store {
+            store.delete_doc(&path.to_string_lossy()).await?;
+        }
         self.rebuild_index().await?;
         Ok(())
     }
 
     pub async fn index_all(&self) -> Result<()> {
         let docs = self.source.list().await?;
+        let mut indexed_paths = std::collections::HashSet::new();
         for doc in docs {
+            indexed_paths.insert(doc.path.to_string_lossy().into_owned());
             if let Ok(full_doc) = self.source.load(doc.path).await {
                 let _ = self.index_doc_internal(&full_doc).await;
             }
         }
+
+        // Prune index rows whose files no longer exist on disk
+        if let Some(store) = &self.store {
+            for stale in store
+                .get_doc_paths()
+                .await?
+                .into_iter()
+                .filter(|p| !indexed_paths.contains(p))
+            {
+                store.delete_doc(&stale).await?;
+            }
+        }
+
         self.rebuild_index().await?;
         Ok(())
     }
