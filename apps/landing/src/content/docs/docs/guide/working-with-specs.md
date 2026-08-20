@@ -15,7 +15,7 @@ Chisel Specs provides a lifecycle-driven workflow for tracking features, archite
 chisel spec new
 ```
 
-You will be prompted for a title and template. Chisel creates a new Markdown file in `.chisel/specs/active/` with the appropriate frontmatter.
+You will be prompted for a title and template. Chisel creates a new Markdown file in `.chisel/specs/` with the appropriate frontmatter.
 
 ### Templates
 
@@ -24,6 +24,15 @@ You will be prompted for a title and template. Chisel creates a new Markdown fil
 
 ```bash
 chisel spec new --template adr
+```
+
+### Providing Content Inline
+
+Skip the template and supply the spec body in one command — handy for scripts and LLM agents that already have the content:
+
+```bash
+chisel spec new "API Rate Limiting" --content "## Summary\n\nThrottle requests per API key."
+cat design-notes.md | chisel spec new "API Rate Limiting" --content -
 ```
 
 ## Lifecycle States
@@ -50,7 +59,7 @@ chisel spec status 0001 in-progress
 chisel spec status 0001 shipped
 ```
 
-When a spec moves to `shipped`, Chisel relocates its file from `.chisel/specs/active/` to `.chisel/specs/shipped/`. When archived, it moves to `.chisel/specs/archived/`.
+Status changes update the `status` field in the spec's frontmatter — the file itself never moves, so links and paths stay stable across the entire lifecycle.
 
 ## Listing and Searching
 
@@ -73,14 +82,13 @@ chisel spec list --machine
 
 ```
 .chisel/specs/
-├── active/          # Draft, Ready, and InProgress specs
-│   ├── 0001_user-auth-flow.md
-│   └── 0002_api-rate-limiting.md
-├── shipped/         # Completed specs
-│   └── 0003_dark-mode.md
-└── archived/        # Historical specs
-    └── 0004_deprecated-endpoint.md
+├── user-auth-flow.md      # status: in-progress
+├── api-rate-limiting.md   # status: draft
+├── dark-mode.md           # status: shipped
+└── deprecated-endpoint.md # status: archived
 ```
+
+All specs live in a single flat directory; each file's lifecycle stage is the `status` field in its frontmatter. Workspaces created before this layout (with `active/`, `shipped/`, and `archived/` subdirectories) are migrated automatically the first time any `chisel spec` command runs — files move into `.chisel/specs/` and a summary of the moves is printed.
 
 ## Why Local Specs?
 

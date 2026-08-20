@@ -32,16 +32,6 @@ pub enum SpecStatus {
     Archived,
 }
 
-impl SpecStatus {
-    pub fn directory(&self) -> &'static str {
-        match self {
-            SpecStatus::Draft | SpecStatus::Ready | SpecStatus::InProgress => "active",
-            SpecStatus::Shipped => "shipped",
-            SpecStatus::Archived => "archived",
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SpecFrontmatter {
     pub title: String,
@@ -239,12 +229,27 @@ impl SpecsService {
             .map(|s| project_root.join(s))
             .unwrap_or_else(|| project_root.join(".chisel").join("specs"));
 
-        let source = Box::new(DefaultSpecSource::new(specs_dir));
-        Ok(Self {
+        let source = DefaultSpecSource::new(specs_dir);
+        let migrated = source.migrate_legacy_layout()?;
+
+        let service = Self {
             store: Some(store),
             root: project_root,
-            source,
-        })
+            source: Box::new(source),
+        };
+
+        if !migrated.is_empty() {
+            eprintln!(
+                "Migrated {} spec(s) from the legacy status-directory layout (status now lives in frontmatter):",
+                migrated.len()
+            );
+            for (from, to) in &migrated {
+                eprintln!("  {} -> {}", from.display(), to.display());
+            }
+            service.index_all().await?;
+        }
+
+        Ok(service)
     }
 
     pub async fn create(
@@ -256,16 +261,17 @@ impl SpecsService {
     ) -> Result<Spec> {
         let slug = slugify_title(title);
         let today = chrono::Local::now().date_naive();
-        let path = self.source.resolve_path(&slug, &SpecStatus::Draft);
+        let path = self.source.resolve_path(&slug);
 
-        let template_content = template
-            .and_then(SpecTemplate::from_name)
-            .map(|t| t.content().to_string())
-            .unwrap_or_else(|| {
-                content
-                    .map(|c| c.to_string())
-                    .unwrap_or_else(|| SpecTemplate::Feature.content().to_string())
-            });
+        // Explicit content wins over a template; default to the feature template
+        let template_content = content
+            .map(str::to_string)
+            .or_else(|| {
+                template
+                    .and_then(SpecTemplate::from_name)
+                    .map(|t| t.content().to_string())
+            })
+            .unwrap_or_else(|| SpecTemplate::Feature.content().to_string());
 
         let spec = Spec {
             slug,
@@ -316,7 +322,7 @@ impl SpecsService {
 
     pub async fn update_status(&self, slug: &str, new_status: SpecStatus) -> Result<Spec> {
         let mut spec = self.source.load(slug).await?;
-        self.source.move_to_status_dir(&mut spec, new_status).await?;
+        self.source.set_status(&mut spec, new_status).await?;
         self.index_spec(&spec).await?;
         Ok(spec)
     }
@@ -347,7 +353,7 @@ impl SpecsService {
         let _ = fs::remove_file(&temp_path);
 
         // Build the updated spec preserving the real path
-        let mut updated = Spec {
+        let updated = Spec {
             slug: spec.slug,
             path: spec.path,
             title: edited.title,
@@ -360,15 +366,7 @@ impl SpecsService {
             content: edited.content,
         };
 
-        // If status changed, handle directory move
-        if updated.status != spec.status {
-            let new_status = updated.status.clone();
-            self.source
-                .move_to_status_dir(&mut updated, new_status)
-                .await?;
-        } else {
-            self.save_and_sync(&updated).await?;
-        }
+        self.save_and_sync(&updated).await?;
 
         Ok(updated)
     }
@@ -429,11 +427,7 @@ impl SpecsService {
     }
 
     pub async fn init(&self) -> Result<()> {
-        // Create subdirectories
-        let root = self.source.root();
-        fs::create_dir_all(root.join("active"))?;
-        fs::create_dir_all(root.join("shipped"))?;
-        fs::create_dir_all(root.join("archived"))?;
+        fs::create_dir_all(self.source.root())?;
 
         let existing = self.source.list(None).await?;
         if existing.is_empty() {
@@ -454,15 +448,6 @@ impl SpecsService {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_spec_status_directory() {
-        assert_eq!(SpecStatus::Draft.directory(), "active");
-        assert_eq!(SpecStatus::Ready.directory(), "active");
-        assert_eq!(SpecStatus::InProgress.directory(), "active");
-        assert_eq!(SpecStatus::Shipped.directory(), "shipped");
-        assert_eq!(SpecStatus::Archived.directory(), "archived");
-    }
 
     #[test]
     fn test_spec_sorting() {
@@ -525,35 +510,126 @@ mod tests {
             .unwrap();
         assert_eq!(spec.slug, "user-auth");
         assert_eq!(spec.status, SpecStatus::Draft);
-        assert!(spec.path.to_string_lossy().contains("active"));
+        assert_eq!(spec.path, root.join(".chisel/specs/user-auth.md"));
 
         // List
         let list = service.list(None).await.unwrap();
         assert_eq!(list.0.len(), 2);
 
-        // Update status to in-progress (stays in active/)
+        // Status changes rewrite frontmatter in place — the path never moves
         let updated = service
             .update_status("user-auth", SpecStatus::InProgress)
             .await
             .unwrap();
         assert_eq!(updated.status, SpecStatus::InProgress);
-        assert!(updated.path.to_string_lossy().contains("active"));
+        assert_eq!(updated.path, spec.path);
 
-        // Update status to shipped (moves to shipped/)
         let shipped = service
             .update_status("user-auth", SpecStatus::Shipped)
             .await
             .unwrap();
         assert_eq!(shipped.status, SpecStatus::Shipped);
-        assert!(shipped.path.to_string_lossy().contains("shipped"));
+        assert_eq!(shipped.path, spec.path);
+        assert_eq!(
+            service.show("user-auth").await.unwrap().status,
+            SpecStatus::Shipped
+        );
 
-        // Old path should not exist
-        assert!(!root.join(".chisel/specs/active/user-auth.md").exists());
-        assert!(root.join(".chisel/specs/shipped/user-auth.md").exists());
+        // Status filter works from frontmatter
+        let shipped_list = service.list(Some(SpecStatus::Shipped)).await.unwrap();
+        assert_eq!(shipped_list.0.len(), 1);
+        assert_eq!(shipped_list.0[0].slug, "user-auth");
 
         // Delete
         service.delete("user-auth").await.unwrap();
         assert!(service.show("user-auth").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_legacy_layout_migration() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().to_path_buf();
+        let specs_dir = root.join(".chisel").join("specs");
+
+        // Build a legacy workspace by hand, including a slug collision
+        // between two status directories
+        let write_legacy = |dir: &str, slug: &str, status: &str| {
+            let d = specs_dir.join(dir);
+            std::fs::create_dir_all(&d).unwrap();
+            std::fs::write(
+                d.join(format!("{}.md", slug)),
+                format!(
+                    "---\ntitle: {}\nstatus: {}\ncreated: 2026-01-01\nupdated: 2026-01-02\n---\n\nBody of {}",
+                    slug, status, slug
+                ),
+            )
+            .unwrap();
+        };
+        write_legacy("active", "auth", "draft");
+        write_legacy("shipped", "auth", "shipped");
+        write_legacy("archived", "old-idea", "archived");
+
+        let service = SpecsService::new(root.clone()).await.unwrap();
+
+        // Files now live flat; the collision got a status-dir suffix and
+        // the emptied legacy directories are gone
+        assert!(specs_dir.join("auth.md").exists());
+        assert!(specs_dir.join("auth-shipped.md").exists());
+        assert!(specs_dir.join("old-idea.md").exists());
+        assert!(!specs_dir.join("active").exists());
+        assert!(!specs_dir.join("shipped").exists());
+        assert!(!specs_dir.join("archived").exists());
+
+        // Statuses survive via frontmatter and the index is populated
+        let list = service.list(None).await.unwrap();
+        assert_eq!(list.0.len(), 3);
+        assert_eq!(
+            service.show("auth").await.unwrap().status,
+            SpecStatus::Draft
+        );
+        assert_eq!(
+            service.show("auth-shipped").await.unwrap().status,
+            SpecStatus::Shipped
+        );
+        let store = service.store.as_ref().unwrap();
+        assert_eq!(store.get_spec_slugs().await.unwrap().len(), 3);
+
+        // Constructing the service again is a no-op
+        let service = SpecsService::new(root).await.unwrap();
+        assert_eq!(service.list(None).await.unwrap().0.len(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_create_with_content() {
+        let temp = tempfile::tempdir().unwrap();
+        let service = SpecsService::new(temp.path().to_path_buf()).await.unwrap();
+
+        // Explicit content becomes the spec body
+        let spec = service
+            .create("With Body", None, None, Some("## Custom\n\nProvided body"))
+            .await
+            .unwrap();
+        assert_eq!(spec.content, "## Custom\n\nProvided body");
+        assert_eq!(
+            service.show("with-body").await.unwrap().content,
+            "## Custom\n\nProvided body"
+        );
+
+        // Explicit content wins over a template
+        let spec = service
+            .create("Body Beats Template", None, Some("adr"), Some("body"))
+            .await
+            .unwrap();
+        assert_eq!(spec.content, "body");
+
+        // No content falls back to the template, then to the feature default
+        let spec = service
+            .create("Template Only", None, Some("adr"), None)
+            .await
+            .unwrap();
+        assert_eq!(spec.content, SpecTemplate::Adr.content());
+        let spec = service.create("Bare", None, None, None).await.unwrap();
+        assert_eq!(spec.content, SpecTemplate::Feature.content());
     }
 
     #[tokio::test]

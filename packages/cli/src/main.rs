@@ -175,6 +175,10 @@ enum SpecCommands {
         /// Template to use (feature, adr)
         #[arg(short, long)]
         template: Option<String>,
+
+        /// Spec body content; pass '-' to read from stdin
+        #[arg(short, long)]
+        content: Option<String>,
     },
     /// List specs
     List {
@@ -371,6 +375,7 @@ async fn main() -> Result<()> {
                     title,
                     area,
                     template,
+                    content,
                 }) => {
                     let title = match title {
                         Some(t) => t,
@@ -383,8 +388,16 @@ async fn main() -> Result<()> {
                                 .interact_text()?
                         }
                     };
+                    let content = match content.as_deref() {
+                        Some("-") => {
+                            let mut buf = String::new();
+                            std::io::Read::read_to_string(&mut std::io::stdin(), &mut buf)?;
+                            Some(buf)
+                        }
+                        other => other.map(str::to_string),
+                    };
                     let spec = service
-                        .create(&title, area, template.as_deref(), None)
+                        .create(&title, area, template.as_deref(), content.as_deref())
                         .await?;
                     match mode {
                         OutputMode::Machine => {
@@ -500,7 +513,7 @@ async fn init_workspace(
     // 4. Generate AI Agent Prompt
     let prompt_path = chisel_dir.join("PROMPT.md");
     let prompt_content = format!(
-        "# Chisel Project: {}\n\nThis project uses Chisel for documentation and specs.\n\n## Structure\n- Docs: `.chisel/docs/` (Markdown)\n- Specs: `.chisel/specs/` (Markdown with YAML frontmatter, organized by lifecycle)\n  - `.chisel/specs/active/` — drafts, ready, and in-progress specs\n  - `.chisel/specs/shipped/` — completed specs\n  - `.chisel/specs/archived/` — superseded or abandoned specs\n\n## Guidelines\nWhen performing tasks in this repo, you can use `chisel docs` and `chisel spec` with the `--machine` flag to inspect and update the project state efficiently.\n\nUse `chisel context create <query>` to gather relevant docs and specs as structured context.",
+        "# Chisel Project: {}\n\nThis project uses Chisel for documentation and specs.\n\n## Structure\n- Docs: `.chisel/docs/` (Markdown)\n- Specs: `.chisel/specs/` (Markdown with YAML frontmatter; each spec's lifecycle stage lives in its `status` field: draft, ready, in-progress, shipped, or archived)\n\n## Guidelines\nWhen performing tasks in this repo, you can use `chisel docs` and `chisel spec` with the `--machine` flag to inspect and update the project state efficiently.\n\nUse `chisel context create <query>` to gather relevant docs and specs as structured context.",
         project_name
     );
     std::fs::write(&prompt_path, prompt_content)?;
@@ -586,9 +599,8 @@ mod tests {
         assert!(root
             .join(".chisel/docs/tutorial/working-with-docs.md")
             .exists());
-        assert!(root.join(".chisel/specs/active").exists());
-        assert!(root.join(".chisel/specs/shipped").exists());
-        assert!(root.join(".chisel/specs/archived").exists());
+        assert!(root.join(".chisel/specs").exists());
+        assert!(root.join(".chisel/specs/example-feature-spec.md").exists());
         assert!(root.join(".chisel/PROMPT.md").exists());
         assert!(root.join(".gitignore").exists());
 
