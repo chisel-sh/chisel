@@ -47,7 +47,7 @@ Configuration for Chisel Specs.
 - **Type:** path (string)
 - **Default:** `.chisel/specs/`
 
-Override the directory Chisel uses as the specs source. Specs are organized into `active/`, `shipped/`, and `archived/` subdirectories within this path.
+Override the directory Chisel uses as the specs source. All spec files live directly in this directory, with lifecycle status stored in each spec's `status` frontmatter field.
 
 ```toml
 [specs]

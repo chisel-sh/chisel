@@ -15,10 +15,12 @@ Specs are organized by lifecycle state:
 
 ```
 .chisel/specs/
-├── active/       # Draft, Ready, and InProgress specs
-├── shipped/      # Completed specs
-└── archived/     # Historical specs
+├── user-auth-flow.md      # status: in-progress
+├── api-rate-limiting.md   # status: draft
+└── dark-mode.md           # status: shipped
 ```
+
+All specs live directly in the specs directory; lifecycle stage is tracked by the `status` frontmatter field, not by subdirectories. Legacy workspaces using `active/`, `shipped/`, and `archived/` subdirectories are migrated to the flat layout automatically on first use.
 
 File naming convention: `<id>_<slug>.md` (e.g., `0001_user-auth-flow.md`).
 
@@ -74,7 +76,7 @@ Display the full content of a spec.
 
 ### `chisel spec status <id> <status>`
 
-Change a spec's status. Automatically moves the file between `active/`, `shipped/`, and `archived/` directories.
+Change a spec's status. Rewrites the `status` field in the spec's frontmatter; the file stays in place.
 
 ### `chisel spec search <query>`
 

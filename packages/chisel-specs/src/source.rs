@@ -17,12 +17,12 @@ pub trait SpecSource: Send + Sync {
     /// Delete a spec by slug
     async fn delete(&self, slug: &str) -> Result<()>;
 
-    /// Move a spec file to the correct directory for its new status.
-    /// Updates the spec's path and status fields, rewrites frontmatter.
-    async fn move_to_status_dir(&self, spec: &mut Spec, new_status: SpecStatus) -> Result<()>;
+    /// Change a spec's status, rewriting its frontmatter in place.
+    /// Updates the spec's status and updated fields.
+    async fn set_status(&self, spec: &mut Spec, new_status: SpecStatus) -> Result<()>;
 
-    /// Resolve the file path for a spec given slug and status
-    fn resolve_path(&self, slug: &str, status: &SpecStatus) -> PathBuf;
+    /// Resolve the file path for a spec slug
+    fn resolve_path(&self, slug: &str) -> PathBuf;
 
     /// Get the specs root directory
     fn root(&self) -> PathBuf;

@@ -1,6 +1,4 @@
-use crate::{
-    parsing::load_spec_from_file, source::SpecSource, Spec, SpecFrontmatter, SpecStatus,
-};
+use crate::{parsing::load_spec_from_file, source::SpecSource, SpecFrontmatter, Spec, SpecStatus};
 use anyhow::Result;
 use async_trait::async_trait;
 use glob::glob;
@@ -11,36 +9,62 @@ pub struct DefaultSpecSource {
     pub root: PathBuf,
 }
 
+/// Subdirectories used by the legacy status-based layout
+const LEGACY_STATUS_DIRS: [&str; 3] = ["active", "shipped", "archived"];
+
 impl DefaultSpecSource {
     pub fn new(root: PathBuf) -> Self {
         Self { root }
     }
 
-    fn subdirs(&self) -> [PathBuf; 3] {
-        [
-            self.root.join("active"),
-            self.root.join("shipped"),
-            self.root.join("archived"),
-        ]
+    /// Move spec files out of the legacy active/shipped/archived
+    /// subdirectories into the flat layout, where status lives only in
+    /// frontmatter. Slug collisions across status directories get a
+    /// `-{dir}` suffix (then `-{dir}-2`, ...) since flat slugs must be
+    /// unique. Emptied legacy directories are removed. Returns the
+    /// relocations performed as (from, to) pairs.
+    pub fn migrate_legacy_layout(&self) -> Result<Vec<(PathBuf, PathBuf)>> {
+        let mut moves = Vec::new();
+        for dir_name in LEGACY_STATUS_DIRS {
+            let dir = self.root.join(dir_name);
+            if !dir.exists() {
+                continue;
+            }
+            for path in glob(&format!("{}/*.md", dir.display()))?.flatten() {
+                let stem = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+                let mut target = self.root.join(format!("{}.md", stem));
+                if target.exists() {
+                    target = self.root.join(format!("{}-{}.md", stem, dir_name));
+                }
+                let mut n = 2;
+                while target.exists() {
+                    target = self.root.join(format!("{}-{}-{}.md", stem, dir_name, n));
+                    n += 1;
+                }
+                fs::rename(&path, &target)?;
+                moves.push((path, target));
+            }
+            // Remove the legacy directory once it holds nothing else
+            let _ = fs::remove_dir(&dir);
+        }
+        Ok(moves)
     }
 }
 
 #[async_trait]
 impl SpecSource for DefaultSpecSource {
     async fn list(&self, status: Option<SpecStatus>) -> Result<Vec<Spec>> {
-        let dirs = match &status {
-            Some(s) => vec![self.root.join(s.directory())],
-            None => self.subdirs().to_vec(),
-        };
-
         let mut specs = Vec::new();
-        for dir in dirs {
-            if !dir.exists() {
-                continue;
-            }
-            for path in glob(&format!("{}/*.md", dir.display()))?.flatten() {
+        if self.root.exists() {
+            for path in glob(&format!("{}/*.md", self.root.display()))?.flatten() {
                 if let Ok(spec) = load_spec_from_file(path) {
-                    specs.push(spec);
+                    if status.as_ref().is_none_or(|s| *s == spec.status) {
+                        specs.push(spec);
+                    }
                 }
             }
         }
@@ -56,12 +80,9 @@ impl SpecSource for DefaultSpecSource {
     }
 
     async fn load(&self, slug: &str) -> Result<Spec> {
-        let filename = format!("{}.md", slug);
-        for dir in &self.subdirs() {
-            let path = dir.join(&filename);
-            if path.exists() {
-                return load_spec_from_file(path);
-            }
+        let path = self.resolve_path(slug);
+        if path.exists() {
+            return load_spec_from_file(path);
         }
         anyhow::bail!("Spec '{}' not found", slug)
     }
@@ -98,38 +119,14 @@ impl SpecSource for DefaultSpecSource {
         Ok(())
     }
 
-    async fn move_to_status_dir(&self, spec: &mut Spec, new_status: SpecStatus) -> Result<()> {
-        let old_dir = spec.status.directory();
-        let new_dir = new_status.directory();
-
-        // Update spec fields
-        spec.status = new_status.clone();
+    async fn set_status(&self, spec: &mut Spec, new_status: SpecStatus) -> Result<()> {
+        spec.status = new_status;
         spec.updated = chrono::Local::now().date_naive();
-
-        if old_dir != new_dir {
-            let new_path = self.resolve_path(&spec.slug, &new_status);
-            if let Some(parent) = new_path.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            // Write to new location first, then remove old
-            let old_path = spec.path.clone();
-            spec.path = new_path;
-            self.save(spec).await?;
-            if old_path.exists() {
-                fs::remove_file(old_path)?;
-            }
-        } else {
-            // Same directory, just update frontmatter in place
-            self.save(spec).await?;
-        }
-
-        Ok(())
+        self.save(spec).await
     }
 
-    fn resolve_path(&self, slug: &str, status: &SpecStatus) -> PathBuf {
-        self.root
-            .join(status.directory())
-            .join(format!("{}.md", slug))
+    fn resolve_path(&self, slug: &str) -> PathBuf {
+        self.root.join(format!("{}.md", slug))
     }
 
     fn root(&self) -> PathBuf {
