@@ -338,7 +338,7 @@ impl DocsService {
             .collect();
 
         let mut recent = docs.clone();
-        recent.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        recent.sort_by_key(|d| std::cmp::Reverse(d.updated_at));
         let recent_changes = recent
             .into_iter()
             .take(5)

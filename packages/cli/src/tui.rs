@@ -1157,18 +1157,16 @@ impl SpecsApp {
                                     self.update_preview().await;
                                 }
                             }
-                            KeyCode::Char('x') => {
-                                if self.selected_spec.is_some() {
-                                    self.prompt = AppPrompt::Select {
-                                        label: "Delete this spec?".to_string(),
-                                        options: vec![
-                                            "No".to_string(),
-                                            "Yes, delete".to_string(),
-                                        ],
-                                        selected: 0,
-                                        kind: PromptKind::ConfirmDeleteSpec,
-                                    };
-                                }
+                            KeyCode::Char('x') if self.selected_spec.is_some() => {
+                                self.prompt = AppPrompt::Select {
+                                    label: "Delete this spec?".to_string(),
+                                    options: vec![
+                                        "No".to_string(),
+                                        "Yes, delete".to_string(),
+                                    ],
+                                    selected: 0,
+                                    kind: PromptKind::ConfirmDeleteSpec,
+                                };
                             }
                             _ => {}
                         },
@@ -1267,29 +1265,27 @@ impl SpecsApp {
                                                     }
                                                 }
                                             }
-                                            PromptKind::ConfirmDeleteSpec => {
-                                                if idx == 1 {
-                                                    if let Some(spec) = &self.selected_spec {
-                                                        let slug = spec.slug.clone();
-                                                        let _ =
-                                                            self.service.delete(&slug).await;
-                                                        self.refresh_data().await?;
-                                                        // Fix selection after delete
-                                                        let len =
-                                                            self.filtered_specs.len();
-                                                        if len == 0 {
+                                            PromptKind::ConfirmDeleteSpec if idx == 1 => {
+                                                if let Some(spec) = &self.selected_spec {
+                                                    let slug = spec.slug.clone();
+                                                    let _ =
+                                                        self.service.delete(&slug).await;
+                                                    self.refresh_data().await?;
+                                                    // Fix selection after delete
+                                                    let len =
+                                                        self.filtered_specs.len();
+                                                    if len == 0 {
+                                                        self.list_state
+                                                            .select(None);
+                                                    } else if let Some(sel) =
+                                                        self.list_state.selected()
+                                                    {
+                                                        if sel >= len {
                                                             self.list_state
-                                                                .select(None);
-                                                        } else if let Some(sel) =
-                                                            self.list_state.selected()
-                                                        {
-                                                            if sel >= len {
-                                                                self.list_state
-                                                                    .select(Some(len - 1));
-                                                            }
+                                                                .select(Some(len - 1));
                                                         }
-                                                        self.update_preview().await;
                                                     }
+                                                    self.update_preview().await;
                                                 }
                                             }
                                             _ => {}
