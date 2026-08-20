@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.2](https://github.com/chisel-sh/chisel/compare/chisel-v0.2.1...chisel-v0.2.2) - 2026-08-20
+
+### Added
+
+- flat spec layout with frontmatter status, and --content for spec new ([#31](https://github.com/chisel-sh/chisel/pull/31))
+
+### Fixed
+
+- panic when truncating spec text containing multibyte characters ([#29](https://github.com/chisel-sh/chisel/pull/29))
+
 ## [0.2.1](https://github.com/chisel-sh/chisel/compare/chisel-v0.2.0...chisel-v0.2.1) - 2026-03-29
 
 ### Fixed
