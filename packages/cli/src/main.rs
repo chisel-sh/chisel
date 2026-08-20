@@ -175,6 +175,10 @@ enum SpecCommands {
         /// Template to use (feature, adr)
         #[arg(short, long)]
         template: Option<String>,
+
+        /// Spec body content; pass '-' to read from stdin
+        #[arg(short, long)]
+        content: Option<String>,
     },
     /// List specs
     List {
@@ -371,6 +375,7 @@ async fn main() -> Result<()> {
                     title,
                     area,
                     template,
+                    content,
                 }) => {
                     let title = match title {
                         Some(t) => t,
@@ -383,8 +388,16 @@ async fn main() -> Result<()> {
                                 .interact_text()?
                         }
                     };
+                    let content = match content.as_deref() {
+                        Some("-") => {
+                            let mut buf = String::new();
+                            std::io::Read::read_to_string(&mut std::io::stdin(), &mut buf)?;
+                            Some(buf)
+                        }
+                        other => other.map(str::to_string),
+                    };
                     let spec = service
-                        .create(&title, area, template.as_deref(), None)
+                        .create(&title, area, template.as_deref(), content.as_deref())
                         .await?;
                     match mode {
                         OutputMode::Machine => {

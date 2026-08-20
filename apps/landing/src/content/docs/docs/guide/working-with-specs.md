@@ -26,6 +26,15 @@ You will be prompted for a title and template. Chisel creates a new Markdown fil
 chisel spec new --template adr
 ```
 
+### Providing Content Inline
+
+Skip the template and supply the spec body in one command — handy for scripts and LLM agents that already have the content:
+
+```bash
+chisel spec new "API Rate Limiting" --content "## Summary\n\nThrottle requests per API key."
+cat design-notes.md | chisel spec new "API Rate Limiting" --content -
+```
+
 ## Lifecycle States
 
 Every spec moves through a defined lifecycle:

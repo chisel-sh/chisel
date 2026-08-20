@@ -64,7 +64,7 @@ open_questions:
 
 ### `chisel spec new`
 
-Create a new spec. Accepts `--template` to select a template (`feature`, `adr`).
+Create a new spec. Accepts `--template` to select a template (`feature`, `adr`) and `--content` to provide the spec body inline; pass `--content -` to read the body from stdin. Explicit content takes precedence over a template.
 
 ### `chisel spec list`
 

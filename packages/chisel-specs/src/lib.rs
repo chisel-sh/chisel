@@ -263,14 +263,15 @@ impl SpecsService {
         let today = chrono::Local::now().date_naive();
         let path = self.source.resolve_path(&slug);
 
-        let template_content = template
-            .and_then(SpecTemplate::from_name)
-            .map(|t| t.content().to_string())
-            .unwrap_or_else(|| {
-                content
-                    .map(|c| c.to_string())
-                    .unwrap_or_else(|| SpecTemplate::Feature.content().to_string())
-            });
+        // Explicit content wins over a template; default to the feature template
+        let template_content = content
+            .map(str::to_string)
+            .or_else(|| {
+                template
+                    .and_then(SpecTemplate::from_name)
+                    .map(|t| t.content().to_string())
+            })
+            .unwrap_or_else(|| SpecTemplate::Feature.content().to_string());
 
         let spec = Spec {
             slug,
@@ -596,6 +597,39 @@ mod tests {
         // Constructing the service again is a no-op
         let service = SpecsService::new(root).await.unwrap();
         assert_eq!(service.list(None).await.unwrap().0.len(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_create_with_content() {
+        let temp = tempfile::tempdir().unwrap();
+        let service = SpecsService::new(temp.path().to_path_buf()).await.unwrap();
+
+        // Explicit content becomes the spec body
+        let spec = service
+            .create("With Body", None, None, Some("## Custom\n\nProvided body"))
+            .await
+            .unwrap();
+        assert_eq!(spec.content, "## Custom\n\nProvided body");
+        assert_eq!(
+            service.show("with-body").await.unwrap().content,
+            "## Custom\n\nProvided body"
+        );
+
+        // Explicit content wins over a template
+        let spec = service
+            .create("Body Beats Template", None, Some("adr"), Some("body"))
+            .await
+            .unwrap();
+        assert_eq!(spec.content, "body");
+
+        // No content falls back to the template, then to the feature default
+        let spec = service
+            .create("Template Only", None, Some("adr"), None)
+            .await
+            .unwrap();
+        assert_eq!(spec.content, SpecTemplate::Adr.content());
+        let spec = service.create("Bare", None, None, None).await.unwrap();
+        assert_eq!(spec.content, SpecTemplate::Feature.content());
     }
 
     #[tokio::test]
