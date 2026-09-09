@@ -171,6 +171,10 @@ mod tests {
         // Re-list and verify
         let docs = service.list(ListOptions::default()).await.unwrap();
         assert!(docs.0.iter().any(|d| d.name == "my-new-doc.md"));
+
+        // Frontmatter block is written exactly once
+        let raw = std::fs::read_to_string(root.join(".chisel/docs/ideas/my-new-doc.md")).unwrap();
+        assert_eq!(raw.matches("---").count(), 2);
     }
 
     #[tokio::test]
@@ -402,11 +406,7 @@ impl DocsService {
             order: None,
         };
 
-        let content = format!(
-            "---\n{}---\n\n# {}\n\nStart writing here...",
-            serde_yaml::to_string(&fm)?,
-            title
-        );
+        let content = format!("# {}\n\nStart writing here...", title);
 
         let doc = Doc {
             name: path.file_name().unwrap().to_string_lossy().to_string(),
