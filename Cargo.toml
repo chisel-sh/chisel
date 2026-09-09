@@ -18,9 +18,6 @@ description = "Text-first tools for shaping information — crafted for develope
 [workspace.metadata.dist]
 # The preferred dist version to use in CI (Cargo.toml SemVer syntax)
 cargo-dist-version = "0.30.3"
-# release.yml's tag trigger is hand-scoped to chisel-v* (see the workflow file);
-# let `dist plan` accept that instead of demanding its own generated default.
-allow-dirty = ["ci"]
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
